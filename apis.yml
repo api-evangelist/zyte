@@ -6,9 +6,9 @@ description: >-
 type: Index
 image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
 tags:
-  - Scraping
-  - Data Extraction
   - Crawling
+  - Data Extraction
+  - Scraping
 url: >-
   https://raw.githubusercontent.com/api-evangelist/zyte/refs/heads/main/apis.yml
 created: '2026-03-29'
@@ -22,9 +22,9 @@ apis:
       management, and AI-powered data extraction built on the Scrapy framework.
     humanURL: https://www.zyte.com/
     tags:
-      - Scraping
-      - Data Extraction
       - Crawling
+      - Data Extraction
+      - Scraping
     properties:
       - type: Documentation
         url: https://docs.zyte.com/
