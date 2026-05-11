@@ -37,6 +37,14 @@ common:
     url: https://docs.zyte.com/
   - type: GitHub Organization
     url: https://github.com/zytedata
+  - type: Integrations
+    url: https://www.zyte.com/integrations/
+integrations:
+  - name: EWDCI
+  - name: Most loved workplace certificate
+  - name: Zyte reward
+  - name: ISO 27001
+  - name: G2 reward
 maintainers:
   - FN: Kin Lane
     email: kin@apievangelist.com
