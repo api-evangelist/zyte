@@ -31,6 +31,8 @@ apis:
       - type: GettingStarted
         url: https://docs.zyte.com/zyte-api/get-started.html
 common:
+  - type: LinkedIn
+    url: https://www.linkedin.com/company/zytedata
   - type: Website
     url: https://www.zyte.com/
   - type: Documentation
