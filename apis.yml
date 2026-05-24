@@ -41,6 +41,8 @@ common:
     url: https://github.com/zytedata
   - type: Integrations
     url: https://www.zyte.com/integrations/
+  - type: LLMsTxt
+    url: https://docs.zyte.com/llms.txt
 integrations:
   - name: EWDCI
   - name: Most loved workplace certificate
