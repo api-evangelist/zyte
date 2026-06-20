@@ -4,7 +4,7 @@ description: >-
   Zyte is a web data extraction platform providing APIs, smart proxy
   management, and AI-powered data extraction built on the Scrapy framework.
 type: Index
-image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
 tags:
   - Crawling
   - Data Extraction
