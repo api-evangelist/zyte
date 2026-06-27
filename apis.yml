@@ -41,7 +41,7 @@ common:
     url: https://github.com/zytedata
   - type: Integrations
     url: https://www.zyte.com/integrations/
-  - type: LLMsTxt
+  - type: LlmsText
     url: https://docs.zyte.com/llms.txt
 integrations:
   - name: EWDCI
