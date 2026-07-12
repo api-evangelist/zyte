@@ -31,6 +31,8 @@ apis:
       - type: GettingStarted
         url: https://docs.zyte.com/zyte-api/get-started.html
 common:
+  - type: DomainSecurity
+    url: security/zyte-domain-security.yml
   - type: LinkedIn
     url: https://www.linkedin.com/company/zytedata
   - type: Website
@@ -43,6 +45,8 @@ common:
     url: https://www.zyte.com/integrations/
   - type: LlmsText
     url: https://docs.zyte.com/llms.txt
+  - url: https://www.zyte.com/blog/feed/
+    type: Blog
 integrations:
   - name: EWDCI
   - name: Most loved workplace certificate
