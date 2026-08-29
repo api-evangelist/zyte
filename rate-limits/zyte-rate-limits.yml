@@ -1,90 +1,165 @@
 specification: API Commons Rate Limits
 specificationVersion: '0.1'
-schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main/schema/api-commons.yml#/$defs/RateLimits
+generated: '2026-08-29'
+method: searched
+source: https://docs.zyte.com/zyte-api/usage/rate-limit.html
+also_source:
+  - https://docs.zyte.com/zyte-api/usage/errors.html
+  - https://docs.zyte.com/zyte-api/pricing.html
 provider: Zyte
 providerId: zyte
 created: '2026-05-04'
-# Provenance stamped 2026-08-11: this artifact was written by the API Evangelist
-# bulk sweep dated 2026-05-04, not harvested from the provider. See roadmap#35.
-method: generated
-modified: '2026-05-04'
+modified: '2026-08-29'
 tags:
   - Crawling
   - Data Extraction
   - Scraping
   - Rate Limiting
-  - Quotas
-  - Throttling
-description: Machine-readable rate limit definitions for the Zyte API surface. Captures per-tier quotas,
-  burst behavior, response signaling, and recovery semantics. Defaults are scaffold values to be replaced
-  with published provider limits.
-headers:
-  limit: X-RateLimit-Limit
-  remaining: X-RateLimit-Remaining
-  reset: X-RateLimit-Reset
-  retryAfter: Retry-After
-  policy: RateLimit-Policy
-responseCodes:
-  throttled: 429
-  quotaExceeded: 429
-  serviceUnavailable: 503
+description: >-
+  Zyte API's published rate limits. This file REPLACES a 2026-05-04 scaffold
+  that asserted X-RateLimit-* response headers Zyte does not send. The honest
+  finding is that Zyte publishes real, specific NUMBERS but NO runtime
+  headers — an agent cannot read its remaining budget from a response and must
+  discover the ceiling by being throttled, then follow Zyte's published backoff
+  table.
+limit_count: 4
 limits:
-  - tier: free
-    name: Free Tier Default
-    scope: api-key
-    metric: requests_per_minute
-    limit: 10
-    burst: 20
-    timeFrame: minute
-    applies:
-      - Zyte
-  - tier: free
-    name: Free Tier Monthly Quota
-    scope: api-key
-    metric: requests_per_month
-    limit: 1000
-    timeFrame: month
-    applies:
-      - Zyte
-  - tier: professional
-    name: Professional Tier Default
-    scope: api-key
-    metric: requests_per_minute
-    limit: 100
-    burst: 200
-    timeFrame: minute
-    applies:
-      - Zyte
-  - tier: professional
-    name: Professional Tier Monthly Quota
-    scope: api-key
-    metric: requests_per_month
-    limit: 100000
-    timeFrame: month
-    applies:
-      - Zyte
-  - tier: enterprise
-    name: Enterprise Negotiated Limit
-    scope: contract
-    metric: requests_per_minute
-    limit: 1000
-    burst: 5000
-    timeFrame: minute
-    applies:
-      - Zyte
-policies:
-  - name: Backoff Strategy
-    description: Clients should implement exponential backoff with jitter, honoring the Retry-After header
-      when present.
-  - name: Burst Handling
-    description: Short bursts above the steady-state limit are tolerated up to the documented burst ceiling
-      before throttling engages.
-  - name: Quota Reset
-    description: Monthly quotas reset at the start of each calendar month in UTC. Per-minute and per-second
-      windows reset on a sliding-window basis.
-  - name: Fair Use
-    description: Even on uncapped enterprise tiers, sustained usage that materially impacts shared infrastructure
-      may be subject to fair-use throttling.
-maintainers:
-  - FN: Kin Lane
-    email: kin@apievangelist.com
+  - id: api-key-rpm-standard
+    scope: per-key
+    window: minute
+    limit: 3000
+    unit: requests
+    applies_to: Standard plans (PAYG and commitment)
+    increase: >-
+      Temporary: support ticket at least 24 hours ahead naming the key, desired
+      RPM, target websites and date range. Permanent: upgrade to Enterprise.
+    source: https://docs.zyte.com/zyte-api/usage/rate-limit.html#zapi-api-key-rate-limit
+  - id: api-key-rpm-enterprise
+    scope: per-key
+    window: minute
+    limit: 10000
+    unit: requests
+    applies_to: Enterprise plans
+    note: >-
+      The rate-limit page says "Custom" for Enterprise; the pricing page states
+      10000 RPM. Recorded from the pricing table, with the discrepancy noted.
+    source: https://docs.zyte.com/zyte-api/pricing.html
+  - id: website-global
+    scope: per-target-website
+    window: unspecified
+    limit: null
+    unit: requests
+    applies_to: All customers, shared
+    description: >-
+      Each target website has its own global limit "to prevent issues on target
+      sites". Not raisable by upgrading — it protects the site being scraped,
+      not Zyte's capacity.
+    exhaustion_type: /limits/over-domain-limit
+  - id: account-website
+    scope: per-account-per-target-website
+    window: unspecified
+    limit: null
+    unit: requests
+    applies_to: Each account
+    description: Per-account limits on a single website "to ensure fair access".
+    exhaustion_type: /limits/over-org-domain-limit
+temporary_limits:
+  description: >-
+    Zyte applies additional undisclosed limits during high demand to keep the
+    platform stable. Surfaced as 503 /limits/over-global-limit and
+    503 /extractor/over-global-limit.
+concurrency:
+  model: >-
+    Zyte does not cap concurrent connections; concurrency is an emergent
+    property of the RPM limit and target-site response time.
+  formula: 'max concurrency ~= RPM limit / 60 * avg response time in seconds'
+  worked_examples:
+    - rpm: 3000
+      avg_response_seconds: 0.2
+      max_concurrency: 10
+    - rpm: 3000
+      avg_response_seconds: 2
+      max_concurrency: 100
+    - rpm: 3000
+      avg_response_seconds: 20
+      max_concurrency: 1000
+headers:
+  published: false
+  limit: null
+  remaining: null
+  reset: null
+  retry_after: null
+  policy: null
+  note: >-
+    Probed live on 2026-08-29 (POST https://api.zyte.com/v1/extract): the
+    response carried strict-transport-security, request-id, www-authenticate
+    and CORS headers — and no rate-limit headers of any kind. Zyte's docs
+    likewise document none. Recorded as a measured absence.
+response_codes:
+  throttled: 429
+  overload: 503
+  quota_exceeded: 403
+  quota_note: >-
+    Hitting the monthly SPENDING limit is not a 429 — it suspends the account
+    and returns 403 /auth/account-suspended until the limit is raised.
+exhaustion_problem_types:
+  - type: /limits/over-user-limit
+    status: 429
+  - type: /limits/over-domain-limit
+    status: 429
+  - type: /limits/over-org-domain-limit
+    status: 429
+  - type: /extractor/over-global-limit
+    status: 503
+  - type: /limits/over-global-limit
+    status: 503
+billing:
+  throttled_requests_charged: false
+  note: Rate-limiting responses cost nothing, which makes retrying budget-safe.
+backoff:
+  published: true
+  algorithm: exponential with randomized wait
+  source: https://docs.zyte.com/zyte-api/usage/errors.html#zapi-retry
+  guidance:
+    rate_limiting: Retry forever with generous waits.
+    unsuccessful: Cap the retry count to avoid an infinite loop.
+  table:
+    - retry: 1
+      rate_limiting_seconds: 20-40
+      unsuccessful_seconds: 3-9
+    - retry: 2
+      rate_limiting_seconds: 20-40
+      unsuccessful_seconds: 3-11
+    - retry: 3
+      rate_limiting_seconds: 30-38
+      unsuccessful_seconds: 3-15
+    - retry: 4
+      rate_limiting_seconds: 30-46
+      unsuccessful_seconds: 3-23
+    - retry: 5
+      rate_limiting_seconds: 30-62
+      unsuccessful_seconds: 3-39
+    - retry: 6
+      rate_limiting_seconds: 30-94
+      unsuccessful_seconds: 3-62
+    - retry: 7
+      rate_limiting_seconds: 30-158
+      unsuccessful_seconds: 3-62
+    - retry: 8
+      rate_limiting_seconds: 30-286
+      unsuccessful_seconds: 3-62
+    - retry: 9
+      rate_limiting_seconds: 30-542
+      unsuccessful_seconds: 3-62
+    - retry: 10+
+      rate_limiting_seconds: 30-630
+      unsuccessful_seconds: 3-62
+  client_support: >-
+    scrapy-zyte-api and python-zyte-api implement this backoff automatically,
+    and additionally retry ban responses (520) up to 3 times.
+observability:
+  stats_api: https://zyte-api-stats.zyte.com/api/v1/stats
+  detail: >-
+    Rate-limiting outcomes are queryable after the fact through the Stats API
+    by filtering on response_codes — the substitute Zyte offers for real-time
+    headers.

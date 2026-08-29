@@ -1,0 +1,188 @@
+generated: '2026-08-29'
+method: searched
+source: >-
+  https://docs.zyte.com/zyte-api/usage/reference.html,
+  https://docs.zyte.com/zyte-api/usage/errors.html,
+  https://docs.zyte.com/zyte-api/usage/rate-limit.html,
+  https://docs.zyte.com/zyte-api/usage/stats/index.html,
+  https://docs.zyte.com/scrapy-cloud/usage/reference/http/jobs.html,
+  plus live header observation on POST https://api.zyte.com/v1/extract (2026-08-29)
+provider: Zyte
+providerId: zyte
+description: >-
+  Cross-cutting runtime semantics for the three Zyte HTTP surfaces. Zyte API is
+  a single very wide POST; Scrapy Cloud is a form-encoded RPC-style API on
+  app.zyte.com plus a storage API on storage.zyte.com; the Stats API is a
+  conventional paginated GET. They do not share conventions with each other,
+  and an agent must not carry assumptions from one to another.
+auth:
+  style: http-basic
+  detail: See authentication/zyte-authentication.yml — three separate key namespaces.
+idempotency:
+  supported: false
+  header: null
+  scope: null
+  retention: null
+  detail: >-
+    Zyte publishes no idempotency key on any surface. On Zyte API this matters
+    less than it looks: POST /extract is semantically a READ of a third-party
+    web page, and Zyte's own retry guidance is to replay the same request body
+    freely — a duplicate fires a duplicate fetch and a duplicate charge, but
+    creates no duplicate resource. It matters more on Scrapy Cloud, where
+    run.json genuinely creates a job and a retried POST after a timeout will
+    start a second one with no key to deduplicate against.
+  na_reason: null
+pagination:
+  surfaces:
+    - api: Zyte API Stats API
+      style: page-number
+      params:
+        page: 1-based page index, default 1
+        page_size: default 500, min 1, max 500
+      response_fields: []
+      note: Hard server-side ceiling of 500 rows per page.
+    - api: Scrapy Cloud
+      style: offset-count
+      params:
+        offset: skip N records
+        count: number of records to return
+      note: >-
+        The storage endpoints (items, logs, requests) also stream newline-
+        delimited JSON (.jl) as an alternative to paging.
+    - api: Zyte API
+      style: none
+      note: Single request/response; no collections.
+filtering:
+  stats_api:
+    - domains
+    - apikey_labels
+    - response_codes
+    - requested_features
+    - extraction_type
+    - extraction_from
+    - tags
+  note: >-
+    Zyte API requests accept arbitrary customer `tags`, which then become a
+    filter and grouping dimension on the Stats API. This is the provider's
+    supported way to attribute cost to a workload, and it is the single most
+    useful convention for an agent that spends money here.
+field_selection:
+  style: request-flags
+  detail: >-
+    Zyte API has no sparse-fieldsets or expand parameter. Instead the request
+    body IS the field selector: setting browserHtml, httpResponseBody,
+    screenshot, networkCapture, product, article, serp, ... to true selects
+    which outputs come back, and each flag has its own cost. Selection and
+    billing are the same control.
+  incompatibilities: >-
+    Some flags cannot be combined (e.g. browserHtml with httpResponseBody);
+    the API answers 422 /request/unprocessable rather than silently choosing.
+metadata:
+  customer_tags: true
+  detail: Free-form `tags` on a Zyte API request, surfaced back through the Stats API.
+request_id_tracing:
+  supported: true
+  header: request-id
+  observed: '2026-08-29 on a live 401 from POST https://api.zyte.com/v1/extract'
+  detail: >-
+    Every Zyte API response carries a `request-id` header. It is the identifier
+    to quote in a support ticket. There is no client-supplied correlation-id
+    header.
+versioning:
+  detail: See lifecycle/zyte-lifecycle.yml — URL path v1, no written policy.
+error_envelope:
+  format: rfc9457
+  media_type: application/problem+json
+  branch_on: the `type` member
+  detail: See errors/zyte-problem-types.yml (17 documented problem types, verified live).
+rate_limit_signaling:
+  headers_published: false
+  detail: >-
+    THE NOTABLE GAP. Zyte documents its limits in prose (3000 RPM standard,
+    10000 RPM enterprise) and signals exhaustion with a 429/503 carrying a
+    problem `type`, but publishes NO X-RateLimit-* / RateLimit-* / Retry-After
+    headers. An agent cannot read remaining budget from a response; it can only
+    discover the wall by hitting it and then following the documented backoff
+    table. See rate-limits/zyte-rate-limits.yml.
+  status_codes:
+    - 429
+    - 503
+  retry_after: false
+reversibility:
+  grade: documented
+  summary: >-
+    Zyte API is a read surface with an irreversible SIDE EFFECT — the money.
+    Scrapy Cloud has real write operations, and they have reversal paths but
+    no stated windows. The one place Zyte states a window is data retention,
+    and that window runs the wrong way: it destroys, it does not restore.
+  surfaces:
+    - api: Zyte API
+      write_operations: false
+      reversal: none
+      detail: >-
+        POST /extract creates nothing on Zyte's side that a caller can undo. It
+        does incur a charge, and a successful response is charged with no
+        documented refund or void path. Rate-limited and unsuccessful responses
+        are explicitly not charged, which is the closest thing to a reversal
+        guarantee Zyte offers.
+      classification: na
+    - api: Scrapy Cloud
+      write_operations: true
+      operations:
+        - operation: 'POST https://app.zyte.com/api/run.json'
+          effect: Starts a spider job (consumes units, incurs runtime).
+          reversal: 'POST https://app.zyte.com/api/jobs/stop.json'
+          reversal_effect: Stops one running job.
+          window_stated: false
+          window_detail: >-
+            Only while the job is in `running` state. Zyte does not state this
+            as a policy, it is implied by the state machine
+            (pending/running/finished/deleted).
+          docs: https://docs.zyte.com/scrapy-cloud/usage/reference/http/jobs.html
+        - operation: 'POST https://app.zyte.com/api/jobs/delete.json'
+          effect: Deletes one or more jobs and their data.
+          reversal: none
+          window_stated: false
+          window_detail: >-
+            NO undelete, NO restore window is documented. An agent calling
+            jobs/delete.json is performing a one-way operation on scraped data.
+          docs: https://docs.zyte.com/scrapy-cloud/usage/reference/http/jobs.html
+        - operation: 'POST https://app.zyte.com/api/jobs/update.json'
+          effect: Adds or removes a job tag.
+          reversal: 'The same endpoint with remove_tag / add_tag inverted.'
+          window_stated: false
+          window_detail: Fully reversible at any time; tags are metadata.
+      classification: documented
+  retention_windows:
+    - subject: Scrapy Cloud job data
+      free_tier: up to 7 days before deletion
+      paid_tier: up to 120 days before deletion
+      source: https://docs.zyte.com/scrapy-cloud/pricing.html
+      direction: destructive
+      note: >-
+        This is a stated, dated window — but it is a deadline for retrieving
+        data, not a window in which a delete can be taken back. Recorded here
+        because it is the only number in the estate an agent can plan against.
+  account_state:
+    - operation: Account suspension on hitting the spending limit
+      reversal: Set or raise the spending limit
+      window_stated: true
+      window_detail: >-
+        "Setting a spending limit lifts your account suspension immediately."
+        The only immediate, stated reversal in the estate.
+      source: https://docs.zyte.com/zyte-api/pricing.html#zapi-account-suspension
+dry_run_mode:
+  supported: false
+  detail: >-
+    No dry-run/preview flag on any surface. The nearest published equivalent is
+    the cost estimator at https://app.zyte.com/o/cost-estimator, which is a
+    human web tool, and the fake-zyte-api stub
+    (https://github.com/zytedata/fake-zyte-api) which lets a caller rehearse
+    against a local stand-in instead of the real API. See
+    sandbox/zyte-sandbox.yml.
+cross_links:
+  - errors/zyte-problem-types.yml
+  - lifecycle/zyte-lifecycle.yml
+  - authentication/zyte-authentication.yml
+  - rate-limits/zyte-rate-limits.yml
+  - sandbox/zyte-sandbox.yml

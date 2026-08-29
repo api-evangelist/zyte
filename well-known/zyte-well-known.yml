@@ -1,0 +1,91 @@
+generated: '2026-08-29'
+method: probed
+source: >-
+  Direct anonymous HTTPS GETs against every Zyte host on record
+  (www.zyte.com, api.zyte.com, docs.zyte.com, app.zyte.com) on 2026-08-29.
+provider: Zyte
+providerId: zyte
+description: >-
+  /.well-known/ discovery probe. Zyte publishes no well-known documents on any
+  host. No WellKnown or SecurityTxt pointer is emitted in apis.yml — this file
+  records a measured absence, not a served surface. Zyte DOES run a responsible
+  disclosure program (see security/zyte-vulnerability-disclosure.yml); it is
+  simply not advertised via RFC 9116 security.txt.
+hosts:
+  - host: www.zyte.com
+    note: Marketing site (Vercel). All /.well-known/* paths return the SPA 404 route.
+    documents:
+      - path: /.well-known/security.txt
+        status: 404
+      - path: /.well-known/openid-configuration
+        status: 404
+      - path: /.well-known/oauth-authorization-server
+        status: 404
+      - path: /.well-known/api-catalog
+        status: 404
+      - path: /.well-known/ai-plugin.json
+        status: 404
+      - path: /.well-known/agent-card.json
+        status: 404
+      - path: /.well-known/agent.json
+        status: 404
+  - host: api.zyte.com
+    note: >-
+      Zyte API production host. Returns a genuine application/problem+json 404
+      body for every unknown path, so these are true negatives rather than an
+      SPA catch-all.
+    documents:
+      - path: /.well-known/security.txt
+        status: 404
+      - path: /.well-known/openid-configuration
+        status: 404
+      - path: /.well-known/oauth-authorization-server
+        status: 404
+      - path: /.well-known/api-catalog
+        status: 404
+      - path: /.well-known/ai-plugin.json
+        status: 404
+      - path: /.well-known/agent-card.json
+        status: 404
+      - path: /.well-known/agent.json
+        status: 404
+  - host: docs.zyte.com
+    note: Documentation host (GitHub Pages). Returns the GitHub Pages 404 page.
+    documents:
+      - path: /.well-known/security.txt
+        status: 404
+      - path: /.well-known/openid-configuration
+        status: 404
+      - path: /.well-known/oauth-authorization-server
+        status: 404
+      - path: /.well-known/api-catalog
+        status: 404
+      - path: /.well-known/ai-plugin.json
+        status: 404
+      - path: /.well-known/agent-card.json
+        status: 404
+      - path: /.well-known/agent.json
+        status: 404
+  - host: app.zyte.com
+    note: >-
+      Application/console host. Every /.well-known/* path answers 302 (redirect
+      to the login flow) rather than serving a document — recorded as a miss.
+    documents:
+      - path: /.well-known/security.txt
+        status: 302
+      - path: /.well-known/openid-configuration
+        status: 302
+      - path: /.well-known/oauth-authorization-server
+        status: 302
+      - path: /.well-known/api-catalog
+        status: 302
+      - path: /.well-known/ai-plugin.json
+        status: 302
+      - path: /.well-known/agent-card.json
+        status: 302
+      - path: /.well-known/agent.json
+        status: 302
+summary:
+  documents_served: 0
+  hosts_probed: 4
+  paths_probed: 28

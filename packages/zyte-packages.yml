@@ -1,0 +1,212 @@
+generated: '2026-08-29'
+method: searched
+source: >-
+  PyPI + npm registry metadata endpoints (pypi.org/pypi/<pkg>/json,
+  registry.npmjs.org/<pkg>) cross-checked against github.com/zytedata and
+  https://docs.zyte.com/
+provider: Zyte
+providerId: zyte
+description: >-
+  First-party Zyte client libraries and framework integrations. Zyte's SDK
+  estate is overwhelmingly Python — the company builds and maintains Scrapy —
+  with a small, now-frozen JavaScript set for the sunsetting Smart Proxy
+  Manager. Versions and publication dates below were read from each registry's
+  metadata endpoint on 2026-08-29.
+registries_checked:
+  - pypi
+  - npm
+  - rubygems
+  - crates.io
+  - nuget
+  - maven-central
+  - pkg.go.dev
+packages:
+  - name: zyte-api
+    registry: pypi
+    url: https://pypi.org/project/zyte-api/
+    repository: https://github.com/zytedata/python-zyte-api
+    docs: https://python-zyte-api.readthedocs.io/en/stable/
+    language: python
+    official: true
+    version: 0.11.0
+    published: '2026-07-23'
+    summary: >-
+      Command-line client and Python client library for Zyte API. Ships the
+      `zyte-api` CLI binary. Optional `zyte-api[x402]` extra adds x402
+      crypto-payment support via an Ethereum key instead of an API key.
+    note: Published by "Zyte Group Ltd <opensource@zyte.com>".
+  - name: scrapy-zyte-api
+    registry: pypi
+    url: https://pypi.org/project/scrapy-zyte-api/
+    repository: https://github.com/scrapy-plugins/scrapy-zyte-api
+    docs: https://scrapy-zyte-api.readthedocs.io/en/latest/
+    language: python
+    official: true
+    version: 0.36.0
+    published: '2026-08-20'
+    summary: >-
+      Scrapy download handler / add-on that routes Scrapy requests through Zyte
+      API. Handles rate-limit and ban retries automatically, per the Zyte API
+      error-handling documentation.
+  - name: zyte-common-items
+    registry: pypi
+    url: https://pypi.org/project/zyte-common-items/
+    repository: https://github.com/zytedata/zyte-common-items
+    language: python
+    official: true
+    version: 0.29.0
+    published: '2025-10-16'
+    summary: >-
+      Item definitions for the Zyte API automatic-extraction schema (product,
+      article, jobPosting, serp, ...). This is the Python projection of the
+      data model expressed in the Zyte API OpenAPI components.schemas.
+  - name: web-poet
+    registry: pypi
+    url: https://pypi.org/project/web-poet/
+    repository: https://github.com/scrapinghub/web-poet
+    docs: https://web-poet.readthedocs.io/
+    language: python
+    official: true
+    version: 0.24.1
+    published: '2026-04-28'
+    summary: Zyte's Page Object pattern library for web scraping.
+  - name: scrapy-poet
+    registry: pypi
+    url: https://pypi.org/project/scrapy-poet/
+    repository: https://github.com/scrapinghub/scrapy-poet
+    language: python
+    official: true
+    version: 0.27.2
+    published: '2026-04-28'
+    summary: Page Object pattern integration for Scrapy.
+  - name: shub
+    registry: pypi
+    url: https://pypi.org/project/shub/
+    repository: https://github.com/scrapinghub/shub
+    docs: https://shub.readthedocs.io/en/latest/
+    language: python
+    official: true
+    version: 2.18.1
+    published: '2026-07-08'
+    summary: >-
+      The Scrapy Cloud command line client — deploy projects and dependencies,
+      schedule spiders, retrieve items and logs. See cli/zyte-cli.yml.
+  - name: scrapinghub
+    registry: pypi
+    url: https://pypi.org/project/scrapinghub/
+    repository: https://github.com/scrapinghub/python-scrapinghub
+    language: python
+    official: true
+    version: 2.9.0
+    published: '2026-08-12'
+    summary: >-
+      Python client for the Scrapy Cloud HTTP API (app.zyte.com/api and
+      storage.zyte.com).
+  - name: scrapinghub-entrypoint-scrapy
+    registry: pypi
+    url: https://pypi.org/project/scrapinghub-entrypoint-scrapy/
+    language: python
+    official: true
+    version: 0.18.1
+    published: '2026-01-28'
+    summary: Scrapy entrypoint used by the Scrapy Cloud job runner stacks.
+  - name: zyte-spider-templates
+    registry: pypi
+    url: https://pypi.org/project/zyte-spider-templates/
+    repository: https://github.com/zytedata/zyte-spider-templates
+    language: python
+    official: true
+    version: 0.12.0
+    published: '2025-03-31'
+    summary: Spider templates for automatic crawlers.
+  - name: zyte-parsers
+    registry: pypi
+    url: https://pypi.org/project/zyte-parsers/
+    repository: https://github.com/zytedata/zyte-parsers
+    language: python
+    official: true
+    version: 0.6.0
+    published: '2025-10-24'
+    summary: Parsing of data from web pages.
+  - name: duplicate-url-discarder
+    registry: pypi
+    url: https://pypi.org/project/duplicate-url-discarder/
+    repository: https://github.com/zytedata/duplicate-url-discarder
+    language: python
+    official: true
+    version: 0.3.0
+    published: '2024-12-30'
+    summary: Discarding duplicate URLs based on rules.
+  - name: scrapy-zyte-smartproxy
+    registry: pypi
+    url: https://pypi.org/project/scrapy-zyte-smartproxy/
+    repository: https://github.com/scrapy-plugins/scrapy-zyte-smartproxy
+    language: python
+    official: true
+    version: 2.4.1
+    published: '2025-03-24'
+    summary: Scrapy middleware for Zyte Smart Proxy Manager.
+    note: >-
+      Smart Proxy Manager is being sunset in favour of Zyte API proxy mode
+      (https://docs.zyte.com/smart-proxy-manager/sunset.html); this integration
+      is maintained but no longer the recommended path.
+  - name: zyte-autoextract
+    registry: pypi
+    url: https://pypi.org/project/zyte-autoextract/
+    repository: https://github.com/zytedata/zyte-autoextract
+    language: python
+    official: true
+    version: 0.7.1
+    published: '2021-11-24'
+    summary: Python interface to the retired Zyte Automatic Extraction API.
+    note: >-
+      Last release 2021-11-24 — superseded by zyte-api / Zyte API automatic
+      extraction. Recorded as a decay signal, not a recommended dependency.
+  - name: zyte-smartproxy-puppeteer
+    registry: npm
+    url: https://www.npmjs.com/package/zyte-smartproxy-puppeteer
+    repository: https://github.com/zytedata/zyte-smartproxy-puppeteer
+    language: javascript
+    official: true
+    version: 1.0.18
+    published: '2022-11-21'
+    summary: Puppeteer wrapper adding Zyte Smart Proxy Manager support.
+    note: >-
+      Last published 2022-11-21. The JavaScript SDK line has not been released
+      in ~4 years while the Zyte API contract has continued to change — the
+      strongest abandonment signal in Zyte's package estate.
+  - name: zyte-smartproxy-puppeteer-core
+    registry: npm
+    url: https://www.npmjs.com/package/zyte-smartproxy-puppeteer-core
+    repository: https://github.com/zytedata/zyte-smartproxy-puppeteer-core
+    language: javascript
+    official: true
+    version: 1.0.6
+    published: '2022-11-02'
+    summary: puppeteer-core wrapper adding Zyte Smart Proxy Manager support.
+  - name: zyte-smartproxy-playwright
+    registry: npm
+    url: https://www.npmjs.com/package/zyte-smartproxy-playwright
+    repository: https://github.com/zytedata/zyte-smartproxy-playwright
+    language: javascript
+    official: true
+    version: 1.0.20
+    published: '2022-11-02'
+    summary: Playwright wrapper adding Zyte Smart Proxy Manager support.
+absent:
+  - registry: rubygems
+    note: No first-party Zyte gem found (rubygems.org/api/v1/gems/zyte.json -> not found).
+  - registry: crates.io
+    note: No first-party Zyte crate found.
+  - registry: nuget
+    note: >-
+      No first-party Zyte NuGet package found; the docs' C# Smart Proxy Manager
+      integration is a code recipe, not a published package.
+  - registry: maven-central
+    note: >-
+      github.com/zytedata/zyte-smartproxy-clients (Java HTTPS clients for Smart
+      Proxy Manager) is source-only; no Maven Central artifact found.
+  - registry: pkg.go.dev
+    note: >-
+      github.com/zytedata/zyte-smartproxy-headless-proxy is a Go binary, not a
+      consumable client library.

@@ -1,0 +1,87 @@
+generated: '2026-08-29'
+method: searched
+source: >-
+  https://python-zyte-api.readthedocs.io/en/stable/ref/cli.html,
+  https://shub.readthedocs.io/en/latest/
+provider: Zyte
+providerId: zyte
+description: >-
+  Zyte ships two first-party command-line clients, one per platform: `zyte-api`
+  drives Zyte API in bulk from a file of URLs, and `shub` drives Scrapy Cloud.
+  They are separate binaries in separate packages using separate API keys, and
+  neither wraps the other.
+cli_count: 2
+clis:
+  - name: zyte-api
+    package: zyte-api
+    registry: pypi
+    install: pip install zyte-api
+    install_extras:
+      - 'pip install "zyte-api[x402]"  # x402 crypto payment support'
+    version: 0.11.0
+    published: '2026-07-23'
+    docs: https://python-zyte-api.readthedocs.io/en/stable/ref/cli.html
+    repository: https://github.com/zytedata/python-zyte-api
+    purpose: Send Zyte API requests in bulk from an input file and stream results to JSON Lines.
+    invocation: 'zyte-api [OPTIONS] INPUT'
+    arguments:
+      - name: INPUT
+        description: Path to an input file of URLs or requests (txt or jl).
+        required: true
+    options:
+      - flag: --intype
+        description: 'Input file type: txt or jl. Auto-detected if omitted.'
+      - flag: --limit
+        description: Maximum number of requests to send.
+      - flag: '--output, -o'
+        description: Output file path; results written as JSON Lines.
+      - flag: --n-conn
+        description: Number of concurrent connections (default 20).
+      - flag: --api-key
+        description: Zyte API key; falls back to the ZYTE_API_KEY environment variable.
+      - flag: --eth-key
+        description: >-
+          Ethereum private key as hex, for paying per request over x402.
+          Mutually exclusive with --api-key.
+      - flag: --dotenv-path
+        description: Path to a .env file holding credentials.
+      - flag: --api-url
+        description: 'Zyte API endpoint (default https://api.zyte.com/v1/).'
+      - flag: '--loglevel, -L'
+        description: 'DEBUG | INFO | WARNING | ERROR (default INFO).'
+      - flag: --shuffle
+        description: Randomize request order.
+      - flag: --dont-retry-errors
+        description: Do not retry failed responses and network errors.
+      - flag: --store-errors
+        description: Include error responses in the output file.
+      - flag: --trust-env
+        description: Honour environment network settings such as HTTP_PROXY.
+    agent_note: >-
+      The most agent-relevant flag in Zyte's estate is --eth-key: it lets a
+      caller pay for extraction with a wallet instead of a provisioned account
+      key.
+  - name: shub
+    package: shub
+    registry: pypi
+    install: pip install shub
+    version: 2.18.1
+    published: '2026-07-08'
+    docs: https://shub.readthedocs.io/en/latest/
+    repository: https://github.com/scrapinghub/shub
+    purpose: >-
+      The Scrapy Cloud command line client — deploy projects and dependencies,
+      schedule spiders, and retrieve scraped data or logs without leaving the
+      command line.
+    command_groups:
+      - group: Deployment
+        description: Deploy projects, deploy dependencies, choose a Scrapy Cloud stack.
+      - group: Scheduling and data
+        description: Schedule jobs, fetch job data, items and logs.
+      - group: Docker images
+        description: Build and deploy custom Docker images; the Custom Images contract.
+      - group: Configuration
+        description: >-
+          scrapinghub.yml target projects, configuration via environment
+          variables, multiple target configurations.
+    changelog: https://shub.readthedocs.io/en/latest/ (Changes section, dated per release)

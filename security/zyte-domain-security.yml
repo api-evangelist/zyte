@@ -1,13 +1,23 @@
-generated: '2026-07-11'
+generated: '2026-08-29'
 method: probed
 source: live DNS/TLS/HTTP probes of apis.yml + OpenAPI hosts
 hosts:
 - host: www.zyte.com
   https: true
   tls_version: TLSv1.3
-  cert_expires: Aug 17 09:00:50 2026 GMT
+  cert_expires: Oct 17 17:33:59 2026 GMT
   hsts: true
   hsts_max_age: 63072000
+- host: zyte-api-stats.zyte.com
+  https: true
+  tls_version: TLSv1.3
+  cert_expires: Nov  8 21:40:21 2026 GMT
+  hsts: null
+- host: api.zyte.com
+  https: true
+  tls_version: TLSv1.3
+  cert_expires: Nov  8 21:40:21 2026 GMT
+  hsts: null
 domains:
 - domain: zyte.com
   dnssec: true

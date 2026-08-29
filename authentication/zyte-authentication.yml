@@ -1,0 +1,84 @@
+generated: '2026-08-29'
+method: searched
+source: >-
+  https://docs.zyte.com/zyte-api/usage/reference.html,
+  https://docs.zyte.com/zyte-api/usage/stats/index.html,
+  https://docs.zyte.com/scrapy-cloud/usage/reference/http/index.html,
+  https://python-zyte-api.readthedocs.io/en/stable/ref/cli.html
+docs: https://docs.zyte.com/zyte-api/get-started.html
+provider: Zyte
+providerId: zyte
+summary:
+  types:
+    - http
+  schemes: 1
+  oauth2: false
+  scopes: false
+description: >-
+  Every Zyte HTTP surface uses the same mechanism — RFC 7617 HTTP Basic with the
+  API key as username and an EMPTY password — but they do NOT share the same
+  key. Zyte runs three separate key namespaces, and the docs call this out
+  explicitly ("Scrapy Cloud uses a different API key than Zyte API"; the Stats
+  API needs "your Zyte dashboard API key (not your Zyte API key)"). An agent
+  holding one Zyte key can call exactly one of the three surfaces. There are no
+  OAuth flows, no scopes, and no token exchange anywhere in the estate, so
+  scopes/ is intentionally absent for this provider.
+schemes:
+  - name: BasicAuth
+    type: http
+    scheme: basic
+    in: header
+    header: Authorization
+    format: 'Basic base64("<API_KEY>:")'
+    password: empty
+    sources:
+      - openapi/zyte-zyte-api-openapi.yaml
+      - openapi/zyte-stats-api-openapi.yaml
+    applied_to: all operations in both specs
+key_namespaces:
+  - surface: Zyte API
+    host: https://api.zyte.com/v1
+    credential: Zyte API key
+    obtain: https://app.zyte.com/o/zyte-api/api-access
+    env_var: ZYTE_API_KEY
+    note: >-
+      Used by python-zyte-api, the zyte-api CLI and scrapy-zyte-api. Failure
+      modes are /auth/not-valid (401, malformed/missing) and /auth/key-not-found
+      (401, wrong key) — see errors/zyte-problem-types.yml.
+  - surface: Zyte API Stats API
+    host: https://zyte-api-stats.zyte.com
+    credential: Zyte dashboard API key
+    obtain: https://app.zyte.com/o/settings
+    note: >-
+      Documented explicitly as NOT the Zyte API key. Requests also require an
+      `organization_id` query parameter, which is the real tenancy boundary on
+      this surface.
+  - surface: Scrapy Cloud API
+    hosts:
+      - https://app.zyte.com/api
+      - https://storage.zyte.com
+    credential: Scrapy Cloud API key
+    obtain: https://app.zyte.com/o/settings/apikey
+    alternate_transport: >-
+      Also accepted as an `?apikey=` URL query parameter. This is a documented
+      convenience that puts a long-lived credential into URLs, request logs and
+      proxy history — prefer the Basic header.
+  - surface: Zyte API via x402
+    host: https://api.zyte.com/v1
+    credential: Ethereum private key (x402 machine payment protocol)
+    obtain: 'pip install "zyte-api[x402]"; zyte-api --eth-key ...'
+    note: >-
+      An alternative to holding a Zyte account key at all — the zyte-api CLI
+      accepts --eth-key (mutually exclusive with --api-key) and pays per request
+      over x402. Genuinely notable: an agent can call Zyte API without ever
+      being onboarded as a Zyte customer.
+    source: https://python-zyte-api.readthedocs.io/en/stable/ref/cli.html
+account_lifecycle:
+  suspension:
+    trigger:
+      - Trial free credit exhausted
+      - Monthly spending limit reached
+    response: '403 /auth/account-suspended'
+    recovery: >-
+      Setting or raising the spending limit lifts the suspension immediately.
+      Documented at https://docs.zyte.com/zyte-api/pricing.html#zapi-account-suspension

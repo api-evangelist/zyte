@@ -1,0 +1,109 @@
+generated: '2026-08-29'
+method: searched
+source: >-
+  https://github.com/zytedata/skills/blob/main/CHANGELOG.md,
+  https://shub.readthedocs.io/en/latest/ (Changes),
+  https://status.zyte.com/api/v2/incidents.json
+provider: Zyte
+providerId: zyte
+description: >-
+  Zyte publishes NO changelog, release notes or version history for Zyte API,
+  the Stats API or the Scrapy Cloud API. Probed on 2026-08-29:
+  docs.zyte.com/history.md, /changelog.md, /release-notes.md,
+  /zyte-api/history.md and /zyte-api/changelog.md all 404, and the docs index
+  and llms.txt (139 pages) contain no changelog entry. What Zyte does publish
+  on a dated cadence is package and product-add-on changelogs. Those are
+  recorded here so the artifact reflects what actually exists rather than
+  claiming a surface Zyte does not run.
+api_changelog:
+  published: false
+  probes:
+    - url: https://docs.zyte.com/history.md
+      status: 404
+    - url: https://docs.zyte.com/changelog.md
+      status: 404
+    - url: https://docs.zyte.com/release-notes.md
+      status: 404
+    - url: https://docs.zyte.com/zyte-api/changelog.md
+      status: 404
+    - url: https://docs.zyte.com/llms.txt
+      status: 200
+      note: 139 documented pages; none is a changelog.
+  consequence: >-
+    An agent or an integrator cannot tell what changed in the Zyte API request
+    or response schema between two dates. The contract is republished in place
+    inside a documentation page with no version marker beyond info.version
+    1.0.0, which has not moved.
+change_notice:
+  pricing_tiers:
+    review_cadence: quarterly
+    notice_period: 2 weeks
+    scope: request-tier reassignment for a (website, request type) pair
+    source: https://docs.zyte.com/zyte-api/pricing.html#tiers
+    note: The only formal change-notice commitment Zyte publishes anywhere.
+published_changelogs:
+  - name: Agentic Web Data (Zyte agent skills)
+    scheme: semver
+    url: https://github.com/zytedata/skills/blob/main/CHANGELOG.md
+    current_version: 0.2.3
+    current_date: '2026-07-16'
+    format: Keep-a-Changelog style, dated, grouped Improved / Fixed
+    entries:
+      - version: 0.2.3
+        date: '2026-07-16'
+        breaking: false
+        highlights:
+          - '/scrape-scrapy-cloud now waits for a started job to finish, reports results, and retries after fixing problems.'
+          - 'scrape-zyte-login moved to an OAuth login flow storing credentials in the project .env.'
+          - '/scrape and /scrape-spec skip detail pages when all required fields are available on list pages.'
+          - 'Fixed /scrape-review-schema on Windows.'
+      - version: 0.2.2
+        date: '2026-07-03'
+        breaking: false
+        highlights:
+          - '/scrape-scrapy-cloud reworked requirements handling to always emit a frozen requirements.txt.'
+          - 'Smarter Scrapy Cloud stack selection with fallback to the latest stack.'
+          - 'Refined triggering on /scrape-zyte-api-stats to cover usage-grounded projections only.'
+          - 'Fixed /scrape-add-page-object crash in projects with Twisted installed.'
+      - version: 0.2.1
+        date: '2026-06-26'
+        breaking: false
+        highlights:
+          - Initial release.
+  - name: shub (Scrapy Cloud CLI)
+    scheme: semver
+    url: https://shub.readthedocs.io/en/latest/
+    current_version: 2.18.1
+    current_date: '2026-07-08'
+    entries:
+      - version: 2.18.1
+        date: '2026-07-08'
+      - version: 2.18.0
+        date: '2026-06-19'
+      - version: 2.17.1
+        date: '2026-04-21'
+      - version: 2.17.0
+        date: '2026-04-07'
+      - version: 2.16.0
+        date: '2025-11-05'
+  - name: Client library releases
+    scheme: semver
+    note: >-
+      Dated release history per package is available from the registry
+      metadata; see packages/zyte-packages.yml, which records version and
+      published date for all 16 first-party packages.
+    most_recent:
+      - package: scrapy-zyte-api
+        version: 0.36.0
+        published: '2026-08-20'
+      - package: scrapinghub
+        version: 2.9.0
+        published: '2026-08-12'
+      - package: zyte-api
+        version: 0.11.0
+        published: '2026-07-23'
+operational_history:
+  status_incidents: https://status.zyte.com/api/v2/incidents.json
+  note: >-
+    Atlassian Statuspage keeps a dated public incident history. It is the only
+    machine-readable time series Zyte publishes about its own platform.

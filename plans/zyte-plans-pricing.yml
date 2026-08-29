@@ -1,141 +1,151 @@
 specification: API Commons Plans
 specificationVersion: '0.1'
-schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main/schema/api-commons.yml#/$defs/Plans
+generated: '2026-08-29'
+method: searched
+source: https://docs.zyte.com/zyte-api/pricing.html
+also_source:
+  - https://docs.zyte.com/scrapy-cloud/pricing.html
+  - https://www.zyte.com/pricing/
 provider: Zyte
 providerId: zyte
 created: '2026-05-04'
-# Provenance stamped 2026-08-11: this artifact was written by the API Evangelist
-# bulk sweep dated 2026-05-04, not harvested from the provider. See roadmap#35.
-method: generated
-modified: '2026-05-04'
+modified: '2026-08-29'
 tags:
   - Crawling
   - Data Extraction
   - Scraping
-description: Machine-readable plans and pricing scaffold for this API provider. Conforms to the API Commons
-  Plans schema. Tier limits and prices are scaffold defaults; replace with provider-published values.
+description: >-
+  Zyte's published plans, harvested from the provider's own pricing
+  documentation on 2026-08-29. This file REPLACES a 2026-05-04 scaffold whose
+  tiers and quotas were invented defaults. Zyte does not sell request bundles;
+  it sells consumption with a spending ceiling, and the tier you are on is
+  defined by that ceiling plus the monthly commitment that buys your volume
+  discount. Per-request price depends on the target website's assigned tier
+  (5 HTTP tiers and 5 browser tiers) and on which features the request turns
+  on, so no single unit price exists.
+currency: USD
+billing_model: consumption-with-spending-limit
+plan_count: 5
 plans:
-  - id: zyte-free
-    name: Free
-    type: freemium
-    description: Free entry tier for the Zyte API surface. Intended for evaluation, prototyping, and low-volume
-      integrations. Real limits and pricing must be reconciled with the provider's published plan documentation.
-    entries:
-      - label: API Requests
-        description: Monthly API request quota across all included endpoints
-        name: api_requests
-        type: quota
-        metric: requests
-        limit: 1000
-        timeFrame: month
-        geo: global
-        domains: []
-        unit: 1
-        price: '0.00'
-        userMultiplied: false
-      - label: Rate Limit
-        description: Maximum requests per minute on the free tier
-        name: rate_limit
-        type: rate
-        metric: requests_per_minute
-        limit: 10
-        timeFrame: minute
-        geo: global
-        domains: []
-        unit: 1
-        price: '0.00'
-        userMultiplied: false
-    elements:
-      - name: Public Documentation
-      - name: Community Support
-      - name: Sandbox Access
-      - name: Zyte
-  - id: zyte-pro
-    name: Professional
-    type: paid
-    description: Production tier for Zyte. Provides higher quotas, priority support, and access to the
-      broader API portfolio. Pricing placeholder; align with the provider's pricing page.
-    entries:
-      - label: API Requests
-        description: Monthly API request quota
-        name: api_requests
-        type: quota
-        metric: requests
-        limit: 100000
-        timeFrame: month
-        geo: global
-        domains: []
-        unit: 1
-        price: TBD
-        userMultiplied: false
-      - label: Rate Limit
-        description: Maximum requests per minute on the professional tier
-        name: rate_limit
-        type: rate
-        metric: requests_per_minute
-        limit: 100
-        timeFrame: minute
-        geo: global
-        domains: []
-        unit: 1
-        price: '0.00'
-        userMultiplied: false
-      - label: Overage
-        description: Per-request price after monthly quota is exceeded
-        name: overage
-        type: metered
-        metric: requests
-        limit: -1
-        timeFrame: month
-        geo: global
-        domains: []
-        unit: 1000
-        price: TBD
-        userMultiplied: false
-    elements:
-      - name: All Production Endpoints
-      - name: Email Support
-      - name: SLA Targets
-      - name: Webhook Subscriptions
-      - name: Zyte
-  - id: zyte-enterprise
+  - id: zyte-api-standard-payg
+    name: Standard (pay-as-you-go)
+    product: Zyte API
+    type: payg
+    price: '0.00'
+    billing_period: month
+    enrollment: Automatic on signup
+    signup: https://app.zyte.com/account/signup/zyteapi
+    initial_free_credit: '5.00'
+    monthly_commitment: '0.00'
+    spending_limit: '100.00'
+    volume_discount: null
+    rate_limit: 3000 RPM
+    note: >-
+      Free credit is $5 for the first billing month and is shared across all
+      standard plans — switching plans does not grant more.
+  - id: zyte-api-standard-commitment
+    name: Standard (commitment)
+    product: Zyte API
+    type: committed
+    billing_period: month
+    enrollment: Subscriptions page (https://app.zyte.com/o/subscriptions/overview)
+    initial_free_credit: '5.00'
+    rate_limit: 3000 RPM
+    commitment_ladder:
+      - spending_limit: '200.00'
+        monthly_commitment: '100.00'
+        volume_discount: 25%
+      - spending_limit: '400.00'
+        monthly_commitment: '200.00'
+        volume_discount: 40%
+      - spending_limit: '700.00'
+        monthly_commitment: '350.00'
+        volume_discount: 48%
+      - spending_limit: '2500.00'
+        monthly_commitment: '500.00'
+        volume_discount: 52%
+    note: >-
+      Commitment is paid at the start of the billing month. Usage above it is
+      billed the following month; usage below it is not refunded.
+  - id: zyte-api-enterprise
     name: Enterprise
+    product: Zyte API
     type: enterprise
-    description: Custom-negotiated tier for Zyte. Includes dedicated capacity, contractual SLAs, security
-      review, data residency options, and named technical account management.
-    entries:
-      - label: API Requests
-        description: Negotiated request volume; -1 indicates uncapped subject to fair use
-        name: api_requests
-        type: quota
-        metric: requests
-        limit: -1
-        timeFrame: month
-        geo: configurable
-        domains: []
-        unit: 1
-        price: custom
-        userMultiplied: false
-      - label: Rate Limit
-        description: Negotiated burst and steady-state rate
-        name: rate_limit
-        type: rate
-        metric: requests_per_minute
-        limit: 1000
-        timeFrame: minute
-        geo: configurable
-        domains: []
-        unit: 1
-        price: custom
-        userMultiplied: false
-    elements:
-      - name: Unlimited / Negotiated Volume
-      - name: 24/7 Dedicated Support
-      - name: Contractual SLA
-      - name: Security & Compliance Review
-      - name: Dedicated Account Manager
-      - name: Custom Data Residency
-      - name: Zyte
-maintainers:
-  - FN: Kin Lane
-    email: kin@apievangelist.com
+    price: contact-sales
+    contact: https://www.zyte.com/zyte-web-scraping-api/#form
+    initial_free_credit: '200.00'
+    monthly_commitment: custom
+    spending_limit: custom
+    volume_discount: custom
+    rate_limit: 10000 RPM
+    includes:
+      - Onboarding and troubleshooting from Zyte engineers
+      - Access to compliance experts
+      - Add-on consultancy
+      - 'Premium 24/7 support and SLAs: 1-hour weekday response, 8-hour weekend'
+      - Early access to new features and priority on feature requests
+  - id: scrapy-cloud-free
+    name: Scrapy Cloud Free
+    product: Scrapy Cloud
+    type: freemium
+    price: '0.00'
+    billing_period: month
+    includes:
+      - One low-resource unit (half the resources of a regular unit)
+      - Job data retained up to 7 days
+      - Jobs run up to 1 hour
+    excludes:
+      - Job scheduling
+      - Docker deployment
+  - id: scrapy-cloud-units
+    name: Scrapy Cloud Units
+    product: Scrapy Cloud
+    type: metered
+    price: '9.00'
+    unit: unit
+    billing_period: month
+    includes:
+      - Each purchased unit has twice the resources of the free low-resource unit
+      - Job data retained up to 120 days
+      - Unlimited job run time
+      - Job scheduling
+      - Docker deployment
+    note: >-
+      Students get the benefits of one purchased unit free
+      (https://www.zyte.com/scrapy-cloud-student-backpack/).
+request_costs:
+  model: >-
+    Base cost is set by the request tier, which is assigned automatically per
+    (target website, request type). There are 5 HTTP tiers and 5 browser tiers.
+    Tier assignment is reviewed quarterly with 2 weeks notice of change.
+  estimator: https://app.zyte.com/o/cost-estimator
+  add_ons:
+    - item: Screenshot
+      price: '0.002'
+    - item: Automatic extraction (per data type)
+      price: 0.0004-0.0016
+      note: '`serp` extraction is free.'
+    - item: 'Custom attributes, method "extract"'
+      price: '0.001'
+    - item: 'Custom attributes, method "generate" — input tokens'
+      price: 0.002 per 1k tokens
+    - item: 'Custom attributes, method "generate" — output tokens'
+      price: 0.01 per 1k tokens
+    - item: Actions
+      price: metered on CPU and network consumption
+    - item: Network captures
+      price: metered on output size
+    - item: Extended geolocations / device residential IPs
+      price: different base cost plus network consumption
+  billing_rule: >-
+    Only successful responses are charged. Rate-limiting responses (429/503)
+    and unsuccessful responses (4xx/5xx/520/521) are free.
+  add_on_note: Add-on prices are quoted before the volume discount.
+alternative_payment:
+  protocol: x402
+  detail: >-
+    The zyte-api Python client can pay per request over x402 with an Ethereum
+    key (`pip install "zyte-api[x402]"`, `zyte-api --eth-key ...`) instead of a
+    Zyte account API key — a machine-payable path onto the API that bypasses
+    plan enrollment entirely.
+  source: https://python-zyte-api.readthedocs.io/en/stable/ref/cli.html

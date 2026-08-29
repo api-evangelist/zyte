@@ -1,0 +1,196 @@
+generated: '2026-08-29'
+method: searched
+source: https://docs.zyte.com/zyte-api/usage/errors.html
+provider: Zyte
+providerId: zyte
+api: Zyte API
+format: rfc9457
+media_type: application/problem+json
+verified:
+  probe: 'POST https://api.zyte.com/v1/extract (no credentials), 2026-08-29'
+  http_status: 401
+  content_type: application/problem+json
+  body: >-
+    {"type":"/auth/not-valid","title":"Authentication Info Invalid","status":401,
+    "detail":"No valid authentication info found in the request. Check the
+    documentation for the correct authentication schema."}
+  note: >-
+    Confirmed live, not merely documented: Zyte API really does return
+    application/problem+json with type/title/status/detail. The `type` member is
+    a relative URI reference (e.g. "/auth/not-valid"), not an absolute URL, and
+    it does not resolve to a document — the only deviation from RFC 9457
+    practice.
+envelope:
+  fields:
+    - name: type
+      description: >-
+        Relative URI reference identifying the problem class, e.g.
+        /limits/over-user-limit. Stable across releases; the field to branch on.
+    - name: title
+      description: Short human-readable summary of the problem class.
+    - name: status
+      description: HTTP status code, duplicated in the body.
+    - name: detail
+      description: Human-readable explanation specific to this occurrence.
+  extra_headers:
+    - name: request-id
+      description: >-
+        Opaque per-request identifier returned on every Zyte API response.
+        Quote it in support tickets.
+    - name: www-authenticate
+      description: 'Basic realm="Zyte API" on 401 responses.'
+retry_guidance:
+  docs: https://docs.zyte.com/zyte-api/usage/errors.html#zapi-retry
+  summary: >-
+    Retry rate-limiting (429/503) and ban (520) responses with exponential
+    backoff and randomized wait. Zyte documents a concrete backoff table: for
+    rate-limiting responses retry forever using 20-40s on the first two
+    attempts widening to 30-630s by the tenth; for unsuccessful responses cap
+    the retry count using 3-9s widening to 3-62s. scrapy-zyte-api and
+    python-zyte-api implement this automatically.
+  billing_note: >-
+    Rate-limiting and unsuccessful responses are NOT charged. Only successful
+    responses cost money — which makes aggressive retry safe for an agent's
+    budget as well as for Zyte.
+problem_types:
+  - type: /limits/over-user-limit
+    status: 429
+    title: API key rate limit exceeded
+    category: rate-limit
+    remediation: >-
+      Retry with exponential backoff. A small percentage of these is expected
+      and normal under efficient use. Raise the key's RPM via support or an
+      Enterprise plan.
+    charged: false
+  - type: /limits/over-domain-limit
+    status: 429
+    title: Global rate limit for the target website exceeded
+    category: rate-limit
+    remediation: >-
+      Retry with backoff. This limit protects the target site and is shared
+      across all Zyte customers, so it is not raised by upgrading your plan.
+    charged: false
+  - type: /limits/over-org-domain-limit
+    status: 429
+    title: Account rate limit for the target website exceeded
+    category: rate-limit
+    remediation: Retry with backoff; reduce concurrency against that single domain.
+    charged: false
+  - type: /extractor/over-global-limit
+    status: 503
+    title: Automatic extraction overloaded
+    category: rate-limit
+    remediation: Retry with backoff.
+    charged: false
+  - type: /limits/over-global-limit
+    status: 503
+    title: Zyte API overloaded
+    category: rate-limit
+    remediation: Retry with backoff.
+    charged: false
+  - type: /download/temporary-error
+    status: 520
+    title: Temporary download error
+    category: download
+    remediation: >-
+      Usually an unavoidable ban. Retry until successful. If it persists on a
+      given site, follow "Maximizing your success rate" then open a ticket with
+      the anti-ban team.
+    charged: false
+  - type: /download/internal-error
+    status: 521
+    title: Permanent download error
+    category: download
+    remediation: >-
+      Report it. Zyte notes that some 520s are misclassified as 521; if the
+      same request only sometimes returns 521, treat it as 520 and retry.
+    charged: false
+  - type: /download/domain-forbidden
+    status: 451
+    title: Domain forbidden
+    category: policy
+    remediation: >-
+      Zyte does not allow extraction from this domain. Not retryable. This is a
+      policy decision, not a transient failure.
+    charged: false
+  - type: /website/domain-unreachable
+    status: 421
+    title: Domain unreachable
+    category: download
+    remediation: >-
+      Check the domain name resolves and is valid before retrying. Documented
+      as should-not-be-retried.
+    charged: false
+  - type: /request/invalid
+    status: 400
+    title: Invalid request
+    category: client
+    remediation: Fix the parameters or values. Not retryable.
+    charged: false
+  - type: /request/invalid-json
+    status: 400
+    title: Invalid JSON body
+    category: client
+    remediation: Fix the request body serialization. Not retryable.
+    charged: false
+  - type: /request/unprocessable
+    status: 422
+    title: Incompatible parameters
+    category: client
+    remediation: >-
+      Two request fields cannot be combined, e.g. browserHtml with
+      httpResponseBody. Choose one. Not retryable.
+    charged: false
+  - type: /auth/not-valid
+    status: 401
+    title: Authentication info invalid
+    category: auth
+    remediation: >-
+      API key missing or malformed. Send HTTP Basic with the key as username
+      and an empty password.
+    charged: false
+  - type: /auth/key-not-found
+    status: 401
+    title: API key not found
+    category: auth
+    remediation: Wrong or revoked key. Fetch a current key from the console.
+    charged: false
+  - type: /auth/account-suspended
+    status: 403
+    title: Account suspended
+    category: billing
+    remediation: >-
+      Trial credit exhausted or spending limit reached. Setting or raising the
+      spending limit lifts the suspension immediately. Not retryable until
+      resolved.
+    charged: false
+  - type: /server/timed-out
+    status: 500
+    title: Request timed out
+    category: server
+    remediation: Retry; report if persistent.
+    charged: false
+  - type: /server/internal
+    status: 500
+    title: Internal server error
+    category: server
+    remediation: Retry; report if persistent.
+    charged: false
+non_error_conditions:
+  note: >-
+    Three conditions an agent might reasonably treat as errors are, by design,
+    HTTP 200 successful responses at Zyte API — and they ARE charged. Getting
+    this wrong is the most expensive misreading of this API.
+  conditions:
+    - name: Bad website response
+      description: >-
+        The target site answered non-200 for a reason other than a ban. Zyte
+        relays it; read the `statusCode` field of the 200 response body.
+    - name: Browser action failure
+      description: >-
+        An action timed out or failed. Read the `actions` array in the 200
+        response for per-action outcomes.
+    - name: Automatic extraction mismatch
+      description: >-
+        The page did not match the requested extraction type. Read
+        `metadata.probability` on the extracted object.

@@ -1,0 +1,101 @@
+generated: '2026-08-29'
+method: searched
+source: >-
+  https://status.zyte.com/, https://status.zyte.com/api/v2/summary.json,
+  https://docs.zyte.com/smart-proxy-manager/sunset.html,
+  https://docs.zyte.com/zyte-api/pricing.html,
+  openapi/zyte-zyte-api-openapi.yaml, openapi/zyte-stats-api-openapi.yaml
+provider: Zyte
+providerId: zyte
+versioning:
+  scheme: url-path
+  current: v1
+  evidence: >-
+    Zyte API is served from https://api.zyte.com/v1 (OpenAPI servers[]). The
+    Stats API carries BOTH an unversioned /api/stats and a versioned
+    /api/v1/stats in the same spec — the only place in Zyte's contract estate
+    where a version is being introduced, and the unversioned path is the one
+    without a stated support policy.
+  media_type_versioning: false
+  header_versioning: false
+  published_policy: false
+  note: >-
+    Zyte publishes no written API versioning policy, no deprecation policy, and
+    no Sunset/Deprecation (RFC 8594) header usage. What it does instead is
+    document individual product sunsets as prose pages — see below.
+status_page:
+  url: https://status.zyte.com/
+  http_status: 200
+  platform: Atlassian Statuspage
+  machine_readable: true
+  api:
+    summary: https://status.zyte.com/api/v2/summary.json
+    status: https://status.zyte.com/api/v2/status.json
+    incidents: https://status.zyte.com/api/v2/incidents.json
+  components:
+    - Zyte API
+    - Scrapy Cloud
+    - 'Scrapy Cloud - Job Execution and Storage'
+    - 'Scrapy Cloud - Project Deployment'
+    - 'Scrapy Cloud - Periodic Job Scheduling'
+    - Smart Proxy Manager
+    - 'Smart Proxy Manager - Residential'
+    - Web Dashboard
+    - Support Center
+  probed: '2026-08-29'
+  note: >-
+    A real Statuspage with a public v2 JSON API — an agent can poll component
+    health without scraping. This is Zyte's strongest operational-transparency
+    surface.
+deprecation:
+  policy_published: false
+  sunsets:
+    - product: Smart Proxy Manager
+      replacement: Zyte API proxy mode
+      docs: https://docs.zyte.com/smart-proxy-manager/sunset.html
+      migration_guide: https://docs.zyte.com/zyte-api/migration/zyte/smartproxy.html
+      status: sunsetting
+      end_of_life_date: null
+      note: >-
+        Zyte publishes a customer FAQ for the SPM-to-Zyte-API transition and a
+        migration guide, but states no dated end-of-life. The SDK evidence is
+        louder than the docs: every Smart Proxy Manager JavaScript client
+        (zyte-smartproxy-puppeteer, -puppeteer-core, -playwright) last shipped
+        in November 2022.
+    - product: Zyte Automatic Extraction API (AutoExtract)
+      replacement: Zyte API automatic extraction
+      status: retired
+      end_of_life_date: null
+      evidence: >-
+        The zyte-autoextract PyPI client last published 2021-11-24; the
+        capability now lives inside the single POST /extract operation.
+    - product: Smart Proxy Manager Fetch API
+      status: replaced
+      docs: https://docs.zyte.com/smart-proxy-manager/fetch-api.html
+      note: >-
+        The docs label two generations at once — "Fetch API (replaced by Zyte
+        API)" and "Old Fetch API (obsolete)".
+  deprecated_operations_in_spec: 0
+  note: >-
+    No operation in either OpenAPI carries `deprecated: true`. With a
+    single-operation REST surface there is nothing to deprecate at the
+    operation level — Zyte deprecates whole PRODUCTS instead, which is why the
+    spec is silent and the docs are not.
+sla:
+  published_terms: false
+  enterprise_only: true
+  detail: >-
+    "Premium 24/7 support and service level agreements (SLAs): 1-hour response
+    time on weekdays, and 8 hours on weekends" — Enterprise plans only, per
+    https://docs.zyte.com/zyte-api/pricing.html. No uptime percentage is
+    published for any tier.
+support:
+  ticketing: https://support.zyte.com/support/tickets/new
+  help_center: https://support.zyte.com/support/home
+pricing_change_notice:
+  detail: >-
+    Zyte reviews request-tier assignments quarterly and commits to 2 weeks
+    notice to affected customers before a tier changes. This is the only
+    documented change-notice window in the estate, and it governs cost rather
+    than contract shape.
+  source: https://docs.zyte.com/zyte-api/pricing.html#tiers

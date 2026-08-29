@@ -1,0 +1,620 @@
+components:
+  schemas:
+    CurrencyValue:
+      description: "A monetary amount in a single currency.\n\nUsed by the multicurrency (`/api/v1/stats`) cost fields, where each cost is reported as a list with one `CurrencyValue` entry per currency present in your usage."
+      properties:
+        currency:
+          description: Three-letter [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) currency code (e.g. `USD`, `EUR`, `GBP`).
+          maxLength: 3
+          minLength: 3
+          type: string
+        value:
+          description: The amount, in micro-units of `currency` (divide by 1,000,000 to get the amount in the currency's main unit).
+          minimum: 0
+          type: number
+      required:
+      - currency
+      - value
+      type: object
+    HTTPError:
+      properties:
+        detail:
+          type: object
+        message:
+          type: string
+      type: object
+    StatsResponse:
+      properties:
+        page:
+          minimum: 1
+          type: integer
+        page_size:
+          maximum: 500
+          minimum: 1
+          type: integer
+        results:
+          items:
+            $ref: '#/components/schemas/StatsResult'
+          type: array
+        total_result_count:
+          minimum: 1
+          type: integer
+      required:
+      - page
+      - page_size
+      - results
+      - total_result_count
+      type: object
+    StatsResponseV1:
+      properties:
+        page:
+          minimum: 1
+          type: integer
+        page_size:
+          maximum: 500
+          minimum: 1
+          type: integer
+        results:
+          items:
+            $ref: '#/components/schemas/StatsResultV1'
+          type: array
+        total_result_count:
+          minimum: 0
+          type: integer
+      required:
+      - page
+      - page_size
+      - results
+      - total_result_count
+      type: object
+    StatsResult:
+      properties:
+        billed_traffic_bytes:
+          description: "Total billed traffic in bytes over the selected timeframe (and per domain when `groupby_domain=true`).\n\nIt is non-zero only for requests that trigger per-GB billing, such as those using\n[`ipType:residential`](/zyte-api/usage/reference.md) or extended geolocations; it is `0` otherwise."
+          minimum: 0
+          type: integer
+        cost_microusd_avg:
+          minimum: 0
+          type: number
+        cost_microusd_p80:
+          minimum: 0
+          type: number
+        cost_microusd_total:
+          minimum: 0
+          type: number
+        day:
+          format: date-time
+          type: string
+        domain:
+          maxLength: 256
+          minLength: 0
+          type: string
+        domain_health:
+          description: "Domain health information. Returned only when `include_domain_health=true` and `groupby_domain=true`.\n\nIt aims to show detailed stats from your Top 100 most requested domains in the last 7 days. Domains not recently used or not within the Top 100 domains will have a `null` value. These stats are not real-time; they are calculated once every 3 hours."
+          nullable: true
+          type: object
+          properties:
+            global_avg_success_rate_24h:
+              type: string
+            global_avg_success_rate_7d:
+              type: string
+            my_avg_price_microusd_24h:
+              type: string
+            my_avg_price_microusd_7d:
+              type: string
+            my_avg_response_time_24h:
+              type: string
+            my_avg_response_time_7d:
+              type: string
+            my_requests_24h:
+              type: integer
+            my_requests_7d:
+              type: integer
+            my_success_rate_24h:
+              type: string
+            my_success_rate_7d:
+              type: string
+            status:
+              type: string
+              enum:
+              - healthy
+              - possible_misconfiguration
+              - issue_under_investigation
+              - possible_performance_issue
+            total_spent_microusd_24h:
+              type: string
+            total_spent_microusd_7d:
+              type: string
+            total_successful_requests_24h:
+              type: integer
+            total_successful_requests_7d:
+              type: integer
+        hour:
+          format: date-time
+          type: string
+        month:
+          format: date-time
+          type: string
+        organization_id:
+          type: integer
+        request_count:
+          minimum: 1
+          type: integer
+        response_time_sec_avg:
+          minimum: 0
+          type: number
+        response_time_sec_p80:
+          minimum: 0
+          type: number
+        status_codes:
+          items:
+            properties:
+              code:
+                nullable: true
+                type: integer
+              count:
+                minimum: 0
+                type: integer
+            type: object
+          type: array
+        year:
+          format: date-time
+          type: string
+      required:
+      - billed_traffic_bytes
+      - cost_microusd_avg
+      - cost_microusd_p80
+      - cost_microusd_total
+      - organization_id
+      - request_count
+      - response_time_sec_avg
+      - response_time_sec_p80
+      type: object
+    StatsResultV1:
+      properties:
+        billed_traffic_bytes:
+          description: "Total billed traffic in bytes over the selected timeframe (and per domain when `groupby_domain=true`). It is a plain integer total, not broken down by currency.\n\nIt is non-zero only for requests that trigger per-GB billing, such as those using\n[`ipType:residential`](/zyte-api/usage/reference.md) or extended geolocations; it is `0` otherwise."
+          minimum: 0
+          type: integer
+        cost_micro_avg:
+          description: Average cost per request, with one entry per currency.
+          items:
+            $ref: '#/components/schemas/CurrencyValue'
+          type: array
+        cost_micro_p80:
+          description: 80th percentile cost per request, with one entry per currency.
+          items:
+            $ref: '#/components/schemas/CurrencyValue'
+          type: array
+        cost_micro_total:
+          description: Total cost, with one entry per currency.
+          items:
+            $ref: '#/components/schemas/CurrencyValue'
+          type: array
+        day:
+          format: date-time
+          type: string
+        domain:
+          maxLength: 256
+          minLength: 0
+          type: string
+        domain_health:
+          description: "Domain health information. Returned only when `include_domain_health=true` and `groupby_domain=true`.\n\nIt aims to show detailed stats from your Top 100 most requested domains in the last 7 days. Domains not recently used or not within the Top 100 domains will have a `null` value. These stats are not real-time; they are calculated once every 3 hours.\n\nMonetary fields (`total_spent_micro_*`, `my_avg_price_micro_*`) are reported as currency arrays, with one entry per currency."
+          nullable: true
+          type: object
+          properties:
+            global_avg_success_rate_24h:
+              type: string
+            global_avg_success_rate_7d:
+              type: string
+            my_avg_price_micro_24h:
+              description: Average price per request in the last 24 hours, with one entry per currency.
+              items:
+                $ref: '#/components/schemas/CurrencyValue'
+              type: array
+            my_avg_price_micro_7d:
+              description: Average price per request in the last 7 days, with one entry per currency.
+              items:
+                $ref: '#/components/schemas/CurrencyValue'
+              type: array
+            my_avg_response_time_24h:
+              type: string
+            my_avg_response_time_7d:
+              type: string
+            my_requests_24h:
+              type: integer
+            my_requests_7d:
+              type: integer
+            my_success_rate_24h:
+              type: string
+            my_success_rate_7d:
+              type: string
+            status:
+              type: string
+              enum:
+              - healthy
+              - possible_misconfiguration
+              - issue_under_investigation
+              - possible_performance_issue
+            total_spent_micro_24h:
+              description: Total amount spent in the last 24 hours, with one entry per currency.
+              items:
+                $ref: '#/components/schemas/CurrencyValue'
+              type: array
+            total_spent_micro_7d:
+              description: Total amount spent in the last 7 days, with one entry per currency.
+              items:
+                $ref: '#/components/schemas/CurrencyValue'
+              type: array
+            total_successful_requests_24h:
+              type: integer
+            total_successful_requests_7d:
+              type: integer
+        hour:
+          format: date-time
+          type: string
+        month:
+          format: date-time
+          type: string
+        organization_id:
+          type: integer
+        request_count:
+          minimum: 1
+          type: integer
+        response_time_sec_avg:
+          minimum: 0
+          type: number
+        response_time_sec_p80:
+          minimum: 0
+          type: number
+        status_codes:
+          items:
+            properties:
+              code:
+                nullable: true
+                type: integer
+              count:
+                minimum: 0
+                type: integer
+            type: object
+          type: array
+        year:
+          format: date-time
+          type: string
+      required:
+      - billed_traffic_bytes
+      - organization_id
+      - request_count
+      - response_time_sec_avg
+      - response_time_sec_p80
+      type: object
+    ValidationError:
+      properties:
+        detail:
+          properties:
+            <location>:
+              properties:
+                <field_name>:
+                  items:
+                    type: string
+                  type: array
+              type: object
+          type: object
+        message:
+          type: string
+      type: object
+  securitySchemes:
+    BasicAuth:
+      scheme: basic
+      type: http
+info:
+  title: APIFlask
+  version: 0.1.0
+openapi: 3.0.3
+paths:
+  /api/stats:
+    get:
+      parameters:
+      - in: query
+        name: organization_id
+        required: true
+        schema:
+          type: integer
+      - in: query
+        name: page
+        required: false
+        schema:
+          default: 1
+          minimum: 1
+          type: integer
+      - in: query
+        name: page_size
+        required: false
+        schema:
+          default: 500
+          maximum: 500
+          minimum: 1
+          type: integer
+      - description: "The start date and time in\n[ISO 8601-1](https://en.wikipedia.org/wiki/ISO_8601) format (e.g. `2024-09-10T00:00:00Z`).\n\nIt defaults to 7 days in the past."
+        in: query
+        name: start_time
+        required: false
+        schema:
+          format: date-time
+          type: string
+      - description: "The end date and time in\n[ISO 8601-1](https://en.wikipedia.org/wiki/ISO_8601) format (e.g. `2024-09-17T00:00:00Z`).\n\nIt defaults to the current date and time."
+        in: query
+        name: end_time
+        required: false
+        schema:
+          format: date-time
+          type: string
+      - in: query
+        name: domains
+        required: false
+        schema:
+          maxLength: 64
+          minLength: 0
+          type: string
+      - in: query
+        name: apikey_labels
+        required: false
+        schema:
+          maxLength: 64
+          minLength: 0
+          type: string
+      - in: query
+        name: response_codes
+        required: false
+        schema:
+          maxLength: 64
+          minLength: 0
+          type: string
+      - in: query
+        name: requested_features
+        required: false
+        schema:
+          enum:
+          - actions
+          - browserHtml
+          - fileDownload
+          - httpResponseBody
+          - networkCapture
+          - screenshot
+          - sessionContext
+          - extendedGeolocation
+      - in: query
+        name: extraction_type
+        required: false
+        schema:
+          enum:
+          - article
+          - articleList
+          - articleNavigation
+          - forumThread
+          - jobPosting
+          - jobPostingNavigation
+          - pageContent
+          - product
+          - productList
+          - productNavigation
+          - serp
+      - in: query
+        name: extraction_from
+        required: false
+        schema:
+          enum:
+          - httpResponseBody
+          - browserHtml
+      - description: "Filter requests by\n[tags](/zyte-api/usage/reference.md).\n \nIt must be a comma-separated list of values, where each value can be:\n \n- A key-value pair separated by a colon, i.e. ``<tag>:<value>``, to include only\nrequests where the specified tag has the specified value.\n- A tag, to include only requests where the specified tag exists.\n\nOnly requests that match *all* the specified tag filters will be\nincluded in the results."
+        in: query
+        name: tags
+        required: false
+        schema:
+          maxLength: 64
+          minLength: 0
+          type: string
+      - in: query
+        name: groupby_time
+        required: false
+        schema:
+          default:
+          enum:
+          - hour
+          - day
+          - month
+          - year
+          - 
+          nullable: true
+          type: string
+      - description: "Group results by domain.\n\nWhen set to `true`, the response will include a `domain` field for each result."
+        in: query
+        name: groupby_domain
+        required: false
+        schema:
+          default: false
+          type: boolean
+      - description: "Include domain health information in the response.\n\nRequires `groupby_domain=true`. If `include_domain_health=true` is specified without `groupby_domain=true`, a validation error will be returned."
+        in: query
+        name: include_domain_health
+        required: false
+        schema:
+          default: false
+          type: boolean
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse'
+          description: Successful response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPError'
+          description: Authentication error
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Validation error
+      security:
+      - BasicAuth: []
+      summary: Stats
+  /api/v1/stats:
+    get:
+      description: "Same as [Stats](#operation/stats), but with multicurrency support.\n \nCost fields are returned as arrays with one entry per currency present in your usage (`cost_micro_total`, `cost_micro_avg`, `cost_micro_p80`), and an additional `billed_traffic_bytes` field is included.\n\nUse this endpoint if your organization is billed in a currency other than USD; the [Stats](#operation/stats) endpoint reports costs in USD only and rejects non-USD organizations."
+      parameters:
+      - in: query
+        name: organization_id
+        required: true
+        schema:
+          type: integer
+      - in: query
+        name: page
+        required: false
+        schema:
+          default: 1
+          minimum: 1
+          type: integer
+      - in: query
+        name: page_size
+        required: false
+        schema:
+          default: 500
+          maximum: 500
+          minimum: 1
+          type: integer
+      - description: "The start date and time in\n[ISO 8601-1](https://en.wikipedia.org/wiki/ISO_8601) format (e.g. `2024-09-10T00:00:00Z`).\n\nIt defaults to 7 days in the past."
+        in: query
+        name: start_time
+        required: false
+        schema:
+          format: date-time
+          type: string
+      - description: "The end date and time in\n[ISO 8601-1](https://en.wikipedia.org/wiki/ISO_8601) format (e.g. `2024-09-17T00:00:00Z`).\n\nIt defaults to the current date and time."
+        in: query
+        name: end_time
+        required: false
+        schema:
+          format: date-time
+          type: string
+      - in: query
+        name: domains
+        required: false
+        schema:
+          maxLength: 64
+          minLength: 0
+          type: string
+      - in: query
+        name: apikey_labels
+        required: false
+        schema:
+          maxLength: 64
+          minLength: 0
+          type: string
+      - in: query
+        name: response_codes
+        required: false
+        schema:
+          maxLength: 64
+          minLength: 0
+          type: string
+      - in: query
+        name: requested_features
+        required: false
+        schema:
+          enum:
+          - actions
+          - browserHtml
+          - fileDownload
+          - httpResponseBody
+          - networkCapture
+          - screenshot
+          - sessionContext
+          - extendedGeolocation
+      - in: query
+        name: extraction_type
+        required: false
+        schema:
+          enum:
+          - article
+          - articleList
+          - articleNavigation
+          - forumThread
+          - jobPosting
+          - jobPostingNavigation
+          - pageContent
+          - product
+          - productList
+          - productNavigation
+          - serp
+      - in: query
+        name: extraction_from
+        required: false
+        schema:
+          enum:
+          - httpResponseBody
+          - browserHtml
+      - description: "Filter requests by\n[tags](/zyte-api/usage/reference.md).\n \nIt must be a comma-separated list of values, where each value can be:\n \n- A key-value pair separated by a colon, i.e. ``<tag>:<value>``, to include only\nrequests where the specified tag has the specified value.\n- A tag, to include only requests where the specified tag exists.\n\nOnly requests that match *all* the specified tag filters will be\nincluded in the results."
+        in: query
+        name: tags
+        required: false
+        schema:
+          maxLength: 64
+          minLength: 0
+          type: string
+      - in: query
+        name: groupby_time
+        required: false
+        schema:
+          default:
+          enum:
+          - hour
+          - day
+          - month
+          - year
+          - 
+          nullable: true
+          type: string
+      - description: "Group results by domain.\n\nWhen set to `true`, the response will include a `domain` field for each result."
+        in: query
+        name: groupby_domain
+        required: false
+        schema:
+          default: false
+          type: boolean
+      - description: "Include domain health information in the response.\n\nRequires `groupby_domain=true`. If `include_domain_health=true` is specified without `groupby_domain=true`, a validation error will be returned."
+        in: query
+        name: include_domain_health
+        required: false
+        schema:
+          default: false
+          type: boolean
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponseV1'
+          description: Successful response
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPError'
+          description: Authentication error
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: Validation error
+      security:
+      - BasicAuth: []
+      summary: Stats V1
+servers:
+- name: Production Server
+  url: https://zyte-api-stats.zyte.com

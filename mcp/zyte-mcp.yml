@@ -1,0 +1,80 @@
+generated: '2026-08-29'
+method: derived
+source: >-
+  openapi/zyte-zyte-api-openapi.yaml + openapi/zyte-stats-api-openapi.yaml,
+  after searching docs.zyte.com, github.com/zytedata and the web for a
+  first-party Zyte MCP server (none found).
+provider: Zyte
+providerId: zyte
+status: candidate
+description: >-
+  Zyte ships NO first-party MCP server. This is a deliberate product choice,
+  not a gap: Zyte's agent surface is Agent Skills ("Agentic Web Data",
+  github.com/zytedata/skills — see skills/_index.yml), and Zyte published a
+  comparison of the two approaches at
+  https://www.zyte.com/blog/claude-skills-vs-mcp-vs-web-scraping-copilot/ plus a
+  build-your-own guide at https://www.zyte.com/blog/build-your-own-mcp-server/.
+  Every "Zyte MCP" server discoverable today is third-party (Composio's
+  zyte_api toolkit, apscrapes/zyte-fetch-page-content-mcp-server, FastMCP
+  tutorials). The tools[] below are a CANDIDATE mapping derived from Zyte's own
+  OpenAPI, offered as a specification for a server that does not exist. Nothing
+  here is a callable endpoint.
+deployment:
+  mode: none
+  endpoint:
+  install:
+  package:
+  auth: api-key
+  verified: searched
+search_evidence:
+  - url: https://docs.zyte.com/llms.txt
+    status: 200
+    note: 139 documented pages; no MCP page.
+  - url: https://api.github.com/search/repositories?q=mcp+org:zytedata
+    status: 200
+    note: total_count 0 — no MCP repository in the Zyte GitHub organization.
+  - url: https://www.zyte.com/blog/build-your-own-mcp-server/
+    status: 200
+    note: >-
+      Zyte's own guidance is for the customer to build an MCP server that wraps
+      Zyte API, which is the opposite of Zyte hosting one.
+third_party_servers:
+  - name: Composio zyte_api toolkit
+    url: https://mcp.composio.dev/zyte_api
+    first_party: false
+  - name: apscrapes/zyte-fetch-page-content-mcp-server
+    url: https://github.com/apscrapes/zyte-fetch-page-content-mcp-server
+    first_party: false
+tools:
+  - name: extract
+    status: candidate
+    description: >-
+      Fetch a URL through Zyte API's anti-ban network and return any
+      combination of raw HTTP body, browser-rendered HTML, screenshot, network
+      captures and AI-extracted structured data.
+    rest:
+      - extract
+    method: POST
+    path: /extract
+    server: https://api.zyte.com/v1
+    input_schema_ref: 'openapi/zyte-zyte-api-openapi.yaml#/components/schemas/ExtractRequest'
+    consequence: read
+    note: >-
+      This is the entire Zyte API REST surface — one operation with a very wide
+      request object. A faithful MCP server would almost certainly decompose it
+      into several narrower tools (fetch_html, screenshot_page,
+      extract_product, extract_article, search_serp) rather than expose
+      ExtractRequest whole.
+  - name: get_usage_stats
+    status: candidate
+    description: >-
+      Read recorded Zyte API usage — cost, request volume, response times,
+      status codes — filtered and grouped.
+    rest:
+      - GET /api/v1/stats
+    server: https://zyte-api-stats.zyte.com
+    consequence: read
+    note: >-
+      Zyte already ships this capability as an Agent Skill
+      (scrape-zyte-api-stats), which is the closest thing Zyte has to an MCP
+      tool today.

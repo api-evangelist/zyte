@@ -1,0 +1,190 @@
+generated: '2026-08-29'
+method: derived
+source: >-
+  openapi/zyte-zyte-api-openapi.yaml, openapi/zyte-stats-api-openapi.yaml,
+  errors/zyte-problem-types.yml, security/zyte-trust-center.yml, plus live
+  probes of https://api.zyte.com/v1/extract (2026-08-29)
+provider: Zyte
+providerId: zyte
+description: >-
+  Cross-cutting standards conformance, judged from the contract and from live
+  responses rather than from marketing copy. Zyte's strongest conformance
+  claim is one it never makes in prose: it really does emit RFC 9457
+  application/problem+json, verified on the wire.
+standards:
+  - id: rfc9457
+    name: RFC 9457 Problem Details for HTTP APIs
+    conforms: true
+    evidence: >-
+      Live probe 2026-08-29: POST https://api.zyte.com/v1/extract with no
+      credentials returned content-type application/problem+json and a body
+      with type/title/status/detail. The OpenAPI declares
+      application/problem+json on all 12 error response codes.
+    deviations:
+      - >-
+        The `type` member is a relative URI reference ("/auth/not-valid") and
+        does not dereference to a document. RFC 9457 permits relative
+        references but recommends a resolvable URI.
+    verified: probed
+  - id: rfc7617
+    name: RFC 7617 HTTP Basic Authentication
+    conforms: true
+    evidence: >-
+      securitySchemes BasicAuth {type: http, scheme: basic} in both specs; the
+      docs cite RFC 7617 section 2 directly and the live 401 carries
+      'www-authenticate: Basic realm="Zyte API"'.
+    verified: probed
+  - id: openapi
+    name: OpenAPI Specification
+    conforms: true
+    version: 3.0.3
+    evidence: >-
+      Two documents: the Zyte API contract (1 operation, 102 component schemas)
+      and the Stats API contract (2 operations, 7 schemas), both published in
+      the docs.
+    deviations:
+      - >-
+        Neither spec is served as a standalone file at a stable URL. Both are
+        embedded inside the HTML/markdown of a documentation page, so an agent
+        must scrape the docs to get the contract.
+      - >-
+        The Stats API document carries info.title "APIFlask" — the framework
+        default was never replaced with the product name.
+      - >-
+        The Stats API operations carry no operationId.
+    verified: derived
+  - id: rfc8594
+    name: RFC 8594 Sunset HTTP Header
+    conforms: false
+    evidence: No Sunset or Deprecation header observed or documented on any surface.
+    verified: probed
+  - id: rate-limit-headers
+    name: 'IETF RateLimit header fields (draft) / X-RateLimit-* convention'
+    conforms: false
+    evidence: >-
+      No RateLimit-*, X-RateLimit-* or Retry-After header on a live response;
+      none documented. Limits are published as prose numbers only.
+    verified: probed
+  - id: idempotency-key
+    name: 'IETF Idempotency-Key header (draft)'
+    conforms: false
+    evidence: No idempotency key on any Zyte surface.
+    verified: derived
+  - id: oauth2
+    name: OAuth 2.0
+    conforms: false
+    evidence: >-
+      No oauth2 securityScheme, no authorization server metadata, no
+      /.well-known/oauth-authorization-server on any host. Exception worth
+      noting: Zyte's own scrape-zyte-login agent skill says the CLI login flow
+      "now uses OAuth" — an internal console flow, not a customer-facing API
+      grant.
+    verified: probed
+  - id: oidc
+    name: OpenID Connect
+    conforms: false
+    evidence: /.well-known/openid-configuration 404 on every host.
+    verified: probed
+  - id: rfc9116
+    name: RFC 9116 security.txt
+    conforms: false
+    evidence: >-
+      404 on all four hosts. Zyte DOES run a responsible disclosure program; it
+      simply is not machine-discoverable.
+    verified: probed
+  - id: llms-txt
+    name: llms.txt
+    conforms: true
+    evidence: 'https://docs.zyte.com/llms.txt returns 200 with 139 indexed documentation pages.'
+    verified: probed
+  - id: agent-skills
+    name: Agent Skills (agentskills.io / skills.sh)
+    conforms: true
+    evidence: >-
+      github.com/zytedata/skills — 15 SKILL.md files with name/description/
+      argument-hint/allowed-tools frontmatter, released 0.2.3 on 2026-07-16 and
+      distributed via `npx skills add zytedata/skills`, with harness-specific
+      builds for Claude Code, Codex CLI and GitHub Copilot CLI.
+    verified: searched
+  - id: mcp
+    name: Model Context Protocol
+    conforms: false
+    evidence: >-
+      No first-party MCP server. Zyte publicly compared skills against MCP and
+      shipped skills.
+    verified: searched
+  - id: a2a
+    name: A2A Agent Card
+    conforms: false
+    evidence: >-
+      /.well-known/agent-card.json and /.well-known/agent.json 404 (or 302 on
+      app.zyte.com) across all four hosts.
+    verified: probed
+  - id: x402
+    name: x402 machine payments
+    conforms: partial
+    evidence: >-
+      The first-party zyte-api Python client ships an [x402] extra and an
+      --eth-key flag that pays per request with an Ethereum key instead of an
+      account API key; zytedata maintains a fork of the x402 repository. The
+      x402 handshake is implemented in the CLIENT — the Zyte API OpenAPI
+      declares no 402 response and no payment challenge, so it is not visible
+      in the contract.
+    verified: searched
+  - id: json-lines
+    name: JSON Lines
+    conforms: true
+    evidence: >-
+      The zyte-api CLI reads and writes .jl; the Scrapy Cloud storage endpoints
+      offer jobs/list.jl, items and logs as newline-delimited JSON.
+    verified: searched
+domain_standards:
+  note: >-
+    Web data extraction has no ratified interoperability standard equivalent to
+    FHIR or ISO 20022, and Zyte's contract declares none. REWARD-ONLY — nothing
+    is invented to fill this slot. Two adjacent signals are recorded because
+    they are real and provider-stated.
+  candidates:
+    - id: fisd-alternative-data-standards
+      name: FISD Alternative Data Standards
+      conforms: co-author
+      evidence: >-
+        Zyte's trust center states Zyte "co-authored the FISD Alternative Data
+        Standards". A market-conduct standard for the alternative-data industry
+        Zyte sells into, not a wire protocol; it appears nowhere in the
+        contract.
+      source: https://www.zyte.com/trust-center
+      verified: searched
+    - id: rfc9309
+      name: RFC 9309 Robots Exclusion Protocol
+      conforms: not-declared
+      evidence: >-
+        The Zyte API contract contains no mention of robots.txt — no request
+        field to honour or override it, no response field reporting it. For a
+        provider whose product is retrieving pages other crawlers are blocked
+        from, the contract's silence on the web's one crawling standard is
+        itself the finding.
+      verified: derived
+    - id: schema-org
+      name: schema.org vocabulary
+      conforms: not-declared
+      evidence: >-
+        Zyte's automatic-extraction data types (product, article,
+        jobPosting, ...) are named like schema.org types, but neither OpenAPI
+        references schema.org, declares a JSON-LD context, or maps its fields to
+        schema.org properties. Recorded as NOT declared rather than inferred
+        from the naming.
+      verified: derived
+compliance_programs:
+  - id: iso-27001
+    name: ISO/IEC 27001
+    status: certified
+    source: https://www.zyte.com/trust-center
+  - id: gdpr
+    name: GDPR
+    status: claimed
+    source: https://www.zyte.com/trust-center
+  - id: ccpa
+    name: CCPA
+    status: claimed
+    source: https://www.zyte.com/trust-center

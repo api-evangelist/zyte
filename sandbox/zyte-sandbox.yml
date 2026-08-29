@@ -1,0 +1,74 @@
+generated: '2026-08-29'
+method: searched
+source: >-
+  https://docs.zyte.com/web-scraping/tutorials/main/index.html,
+  https://github.com/zytedata/fake-zyte-api,
+  https://github.com/zytedata/zyte-test-websites,
+  https://docs.zyte.com/zyte-api/pricing.html
+provider: Zyte
+providerId: zyte
+description: >-
+  Zyte publishes NO test-mode API key, no separate sandbox host and no test
+  key prefix. Every call goes to production api.zyte.com and every successful
+  call is charged. What Zyte provides instead is upstream of the API: purpose-
+  built websites that are safe and legal to scrape, a local stub that
+  impersonates a subset of Zyte API so code can be exercised without spending,
+  and a $5 starting credit that functions as the trial.
+sandbox_host: none
+test_key_prefix: none
+test_mode: none
+trial:
+  free_credit_usd: 5
+  enterprise_free_credit_usd: 200
+  scope: First billing month; shared across standard plans.
+  expiry_behaviour: >-
+    Account is suspended (403 /auth/account-suspended) until a spending limit
+    is set.
+  source: https://docs.zyte.com/zyte-api/pricing.html#zapi-trial
+spending_controls:
+  spending_limit:
+    description: Hard monthly ceiling; the account suspends when reached.
+    standard_default_usd: 100
+  spending_alerts:
+    description: Customer-defined alerts and limits to stop spend before the hard ceiling.
+    source: https://docs.zyte.com/zyte-api/pricing.html#zapi-spending-alerts
+  note: >-
+    For an agent, the spending limit IS the sandbox boundary — it is the only
+    mechanism that bounds the blast radius of a runaway loop.
+cost_estimator:
+  url: https://app.zyte.com/o/cost-estimator
+  type: hosted web tool
+  machine_readable: false
+local_stub:
+  name: fake-zyte-api
+  repository: https://github.com/zytedata/fake-zyte-api
+  official: true
+  description: >-
+    A stub implementation of a subset of Zyte API, published by Zyte. Point
+    --api-url at it to rehearse request shapes, retry logic and error handling
+    with no network egress and no charge. This is the closest thing Zyte has to
+    a sandbox mode.
+test_targets:
+  description: >-
+    Zyte maintains and points its tutorials at websites built for scraping
+    practice. These are the "test fixtures" of a web-data API — the safe URLs
+    to put in a request body.
+  sites:
+    - url: https://toscrape.com/
+      description: Zyte's scraping sandbox hub.
+    - url: https://books.toscrape.com/
+      description: Fictional bookstore catalogue; product/productList exercises.
+    - url: https://quotes.toscrape.com/
+      description: Quotes site with pagination, JS and login variants.
+    - repository: https://github.com/zytedata/zyte-test-websites
+      description: 'Zyte-published websites for testing spiders (source, self-hostable).'
+    - repository: https://github.com/zytedata/spidyquotes
+      description: Example site used in web scraping tutorials.
+documented_error_rehearsal:
+  description: >-
+    Zyte does not publish trigger values that force a specific error. The
+    documented way to exercise a non-200 path is to request a URL the target
+    site answers non-200 for — e.g. https://toscrape.com/not-found, which comes
+    back as an HTTP 200 Zyte API response whose body statusCode is 404. That
+    example is itself the clearest illustration of Zyte's success semantics.
+  source: https://docs.zyte.com/zyte-api/usage/errors.html

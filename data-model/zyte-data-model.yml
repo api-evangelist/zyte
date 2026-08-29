@@ -1,0 +1,184 @@
+generated: '2026-08-29'
+method: derived
+source: openapi/zyte-zyte-api-openapi.yaml, openapi/zyte-stats-api-openapi.yaml
+provider: Zyte
+providerId: zyte
+description: >-
+  Zyte API has no resource graph in the REST sense — there are no ids, no
+  collections, no CRUD, and nothing persists between calls. The 102 component
+  schemas describe ONE request object and ONE response object, and the
+  "entities" are the extraction data types the response can carry. The real
+  relationship structure is therefore a request/output selection graph
+  (which request flag produces which response object, and which options
+  object configures it) rather than an entity-relationship diagram. That is
+  recorded faithfully below rather than forced into has_one/has_many.
+shape: request-response
+identifier_scheme:
+  resource_ids: false
+  note: >-
+    The only identifiers in the contract are caller-supplied and opaque to
+    Zyte: `jobId` (echoed back), `echoData` (echoed back verbatim), `tags`
+    (echoed into the Stats API), and `session` / `sessionContext` which carry
+    browser state between calls. None is a Zyte-issued resource id.
+root_entities:
+  - name: ExtractRequest
+    schema: '#/components/schemas/ExtractRequest'
+    description: The single request body of POST /extract. 55 top-level properties.
+    property_count: 55
+  - name: Response200
+    schema: '#/components/schemas/Response200'
+    description: The single success response body. 24 top-level properties.
+    property_count: 24
+  - name: Problem
+    schema: '#/components/schemas/Problem'
+    description: RFC 9457 error body used by all 12 error responses.
+extraction_types:
+  description: >-
+    The data types Zyte's automatic extraction can return. Each is requested by
+    setting a boolean flag on the request, configured by a sibling *Options
+    object, and returned under the same name on the response. Each carries its
+    own per-request cost.
+  types:
+    - name: article
+      options: articleOptions
+      returned_as: article
+    - name: articleList
+      options: articleListOptions
+      returned_as: articleList
+    - name: articleNavigation
+      options: articleNavigationOptions
+      returned_as: articleNavigation
+    - name: forumThread
+      options: forumThreadOptions
+      returned_as: forumThread
+    - name: jobPosting
+      options: jobPostingOptions
+      returned_as: jobPosting
+    - name: jobPostingNavigation
+      options: jobPostingNavigationOptions
+      returned_as: jobPostingNavigation
+    - name: pageContent
+      options: pageContentOptions
+      returned_as: pageContent
+    - name: product
+      options: productOptions
+      returned_as: product
+    - name: productList
+      options: productListOptions
+      returned_as: productList
+    - name: productNavigation
+      options: productNavigationOptions
+      returned_as: productNavigation
+    - name: serp
+      options: serpOptions
+      returned_as: serp
+      note: >-
+        The only extraction type that is free of charge, cannot be combined
+        with any other field, and defaults to an HTTP rather than browser
+        request.
+    - name: customAttributes
+      options: customAttributesOptions
+      returned_as: customAttributes
+      note: >-
+        LLM-backed. Billed on input/output tokens with method "generate", or a
+        flat fee with method "extract".
+raw_outputs:
+  description: Non-extracted outputs, each toggled by its own boolean request flag.
+  outputs:
+    - name: httpResponseBody
+    - name: httpResponseHeaders
+    - name: browserHtml
+    - name: screenshot
+      options: screenshotOptions
+    - name: networkCapture
+      note: Configured by NetworkCaptureFilterSequence / NetworkCaptureFilter / UrlFilter / ResourceTypeFilter.
+    - name: responseCookies
+relationships:
+  - from: ExtractRequest
+    to: Response200
+    type: produces
+    via: 'the request output flags — each true flag adds the same-named property to the response'
+  - from: ExtractRequest.actions
+    to: Response200.actions
+    type: has_many
+    via: ActionResult
+    note: >-
+      Browser actions are the one ordered, stateful structure in the contract:
+      Action / ActionSequence in, ActionResult / InteractionLogEntry out, with
+      per-action success or failure reported inside an HTTP 200.
+  - from: ExtractRequest.sessionContext
+    to: Response200.session
+    type: carries
+    via: SessionContext / SessionContextParameters / Session
+    note: The mechanism by which state survives across otherwise stateless calls.
+  - from: ExtractRequest.echoData
+    to: Response200.echoData
+    type: passthrough
+  - from: ExtractRequest.jobId
+    to: Response200.jobId
+    type: passthrough
+  - from: ExtractRequest.tags
+    to: 'Stats API /api/v1/stats?tags='
+    type: attributes
+    note: >-
+      The only cross-API relationship in the estate: request tags become the
+      cost-attribution dimension on the Stats API.
+supporting_schemas:
+  count: 102
+  notable:
+    - Action
+    - ActionSequence
+    - ActionResult
+    - ActionSelector
+    - ActionTimeout
+    - GoToOptions
+    - InteractionLogEntry
+    - Session
+    - SessionContext
+    - SessionContextParameters
+    - Cookie
+    - RequestHeaders
+    - CustomHttpRequestHeader
+    - HTTPHeader
+    - NetworkCaptureFilter
+    - NetworkCaptureFilterSequence
+    - UrlFilter
+    - UrlPattern
+    - ResourceTypeFilter
+    - CapturedResponse
+    - Viewport
+    - CountryCode
+    - PostalAddress
+    - Serp
+    - SerpOptions
+    - OrganicResult
+    - OrganicResultURL
+    - SearchURL
+    - Metadata
+    - ExtractFrom
+    - ExtractionOptions
+    - PatternMatchingOptions
+    - ForbiddenDomainProblem
+python_projection:
+  package: zyte-common-items
+  version: 0.29.0
+  url: https://pypi.org/project/zyte-common-items/
+  note: >-
+    Zyte publishes the extraction item definitions as a Python package. It is
+    the same data model as components.schemas, expressed as attrs classes, and
+    is the most convenient machine-readable form of the entity layer.
+stats_model:
+  source: openapi/zyte-stats-api-openapi.yaml
+  entity: usage record
+  tenancy_key: organization_id
+  dimensions:
+    - domains
+    - apikey_labels
+    - response_codes
+    - requested_features
+    - extraction_type
+    - extraction_from
+    - tags
+  time_range:
+    start_time: 'ISO 8601, defaults to 7 days ago'
+    end_time: 'ISO 8601, defaults to now'

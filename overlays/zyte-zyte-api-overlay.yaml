@@ -1,0 +1,172 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for the Zyte API contract
+  version: 1.0.0
+extends: ../openapi/zyte-zyte-api-openapi.yaml
+x-provenance:
+  generated: '2026-08-29'
+  method: generated
+  source: >-
+    Derived from the Zyte API OpenAPI as published at
+    https://docs.zyte.com/zyte-api/usage/reference.html, plus
+    errors/zyte-problem-types.yml, conventions/zyte-conventions.yml,
+    authentication/zyte-authentication.yml and
+    rate-limits/zyte-rate-limits.yml. The upstream spec is never mutated.
+actions:
+  - target: $.info
+    description: >-
+      Name the product and point at the canonical documentation. The published
+      info block calls the API "Web Data Extraction API", which is not the name
+      the docs, the console or the billing use.
+    update:
+      x-product-name: Zyte API
+      x-documentation: https://docs.zyte.com/zyte-api/get-started.html
+      x-reference: https://docs.zyte.com/zyte-api/usage/reference.html
+      x-pricing: https://docs.zyte.com/zyte-api/pricing.html
+      x-status-page: https://status.zyte.com/
+      x-support: https://support.zyte.com/support/tickets/new
+      x-spec-distribution: >-
+        The contract is published only as an embedded YAML block inside the
+        HTML documentation page; there is no standalone spec URL.
+  - target: $.info
+    description: Record the sibling contract, which the published spec does not reference.
+    update:
+      x-related-apis:
+        - name: Zyte API Stats API
+          spec: ../openapi/zyte-stats-api-openapi.yaml
+          server: https://zyte-api-stats.zyte.com
+          note: Uses a DIFFERENT API key (the Zyte dashboard key).
+        - name: Scrapy Cloud API
+          docs: https://docs.zyte.com/scrapy-cloud/usage/reference/http/index.html
+          servers:
+            - https://app.zyte.com/api
+            - https://storage.zyte.com
+          note: No machine-readable contract published. Uses a THIRD API key.
+  - target: $.components.securitySchemes.BasicAuth
+    description: >-
+      Make the credential concrete. The published scheme says only
+      http/basic, which does not tell a caller that the password must be empty
+      or where the key comes from.
+    update:
+      description: >-
+        HTTP Basic (RFC 7617). Send the Zyte API key as the username and an
+        EMPTY password, i.e. Authorization: Basic base64("<API_KEY>:").
+      x-credential-source: https://app.zyte.com/o/zyte-api/api-access
+      x-env-var: ZYTE_API_KEY
+      x-key-namespace: zyte-api
+      x-not-interchangeable-with:
+        - Scrapy Cloud API key (https://app.zyte.com/o/settings/apikey)
+        - Zyte dashboard API key (https://app.zyte.com/o/settings)
+      x-alternative-auth:
+        protocol: x402
+        description: >-
+          The first-party zyte-api client can pay per request with an Ethereum
+          key (--eth-key) instead of an account API key.
+        source: https://python-zyte-api.readthedocs.io/en/stable/ref/cli.html
+  - target: $.paths['/extract'].post
+    description: >-
+      Attach the runtime semantics an agent needs and the contract omits:
+      cost, reversibility, retry policy and the trap that some failures arrive
+      as HTTP 200.
+    update:
+      x-agentic-access:
+        action-class: read
+        consequence: billable
+        reversible: false
+        note: >-
+          Creates no resource and cannot be undone, but a successful response
+          is charged. The account spending limit is the only blast-radius
+          control.
+      x-idempotency:
+        supported: false
+        note: >-
+          No idempotency key. Replaying the same body is safe for correctness
+          (it is a fetch) but not for cost.
+      x-cost-model:
+        billed-on: successful responses only
+        free: rate-limiting responses (429/503) and unsuccessful responses
+        drivers:
+          - request tier of the target website
+          - request type (HTTP or browser)
+          - per-feature add-ons (screenshot, extraction, custom attributes, actions, network capture)
+        estimator: https://app.zyte.com/o/cost-estimator
+      x-retry-policy:
+        retry-on:
+          - 429
+          - 503
+          - 520
+        algorithm: exponential backoff with randomized wait
+        first-wait-seconds-rate-limiting: 20-40
+        max-wait-seconds-rate-limiting: 630
+        do-not-retry:
+          - 400
+          - 401
+          - 403
+          - 421
+          - 422
+          - 451
+        source: https://docs.zyte.com/zyte-api/usage/errors.html#zapi-retry
+      x-rate-limit:
+        standard-rpm: 3000
+        enterprise-rpm: 10000
+        headers-published: false
+        note: >-
+          No RateLimit-*/Retry-After headers are returned. Remaining budget is
+          not observable at runtime.
+      x-response-headers:
+        - name: request-id
+          description: Opaque per-request identifier; quote it in support tickets.
+      x-success-is-not-always-success:
+        description: >-
+          THREE conditions return HTTP 200 and ARE charged, and an agent that
+          treats 200 as "done" will silently accept bad data.
+        conditions:
+          - name: bad website response
+            detect: 'read the response `statusCode` field, not the HTTP status'
+          - name: browser action failure
+            detect: 'inspect the response `actions[]` array for per-action outcomes'
+          - name: extraction mismatch
+            detect: 'check `metadata.probability` on the extracted object'
+  - target: $.paths['/extract'].post.responses['429']
+    description: Bind the documented problem types to the status code.
+    update:
+      x-problem-types:
+        - /limits/over-user-limit
+        - /limits/over-domain-limit
+        - /limits/over-org-domain-limit
+      x-charged: false
+      x-catalog: ../errors/zyte-problem-types.yml
+  - target: $.paths['/extract'].post.responses['503']
+    description: Bind the documented problem types to the status code.
+    update:
+      x-problem-types:
+        - /limits/over-global-limit
+        - /extractor/over-global-limit
+      x-charged: false
+      x-catalog: ../errors/zyte-problem-types.yml
+  - target: $.paths['/extract'].post.responses['520']
+    description: Bind the documented problem type and its retry semantics.
+    update:
+      x-problem-types:
+        - /download/temporary-error
+      x-retryable: true
+      x-catalog: ../errors/zyte-problem-types.yml
+  - target: $.paths['/extract'].post.responses['521']
+    description: Bind the documented problem type and Zyte's own caveat about it.
+    update:
+      x-problem-types:
+        - /download/internal-error
+      x-retryable: false
+      x-caveat: >-
+        Zyte documents that some 520s are misclassified as 521; if the same
+        request only sometimes returns 521, treat it as 520 for that site.
+      x-catalog: ../errors/zyte-problem-types.yml
+  - target: $.paths['/extract'].post.responses['403']
+    description: Distinguish a billing suspension from an authorization failure.
+    update:
+      x-problem-types:
+        - /auth/account-suspended
+      x-recovery: >-
+        Set or raise the account spending limit; the suspension lifts
+        immediately.
+      x-catalog: ../errors/zyte-problem-types.yml
