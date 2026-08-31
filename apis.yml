@@ -118,6 +118,11 @@ apis:
     baseURL: https://app.zyte.com/api
     tags:
       - Scrapy
+      - Job
+      - Hosting
+      - Storage
+    tags_raw:
+      - Scrapy
       - Jobs
       - Hosting
       - Storage
