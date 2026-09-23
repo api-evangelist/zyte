@@ -1,0 +1,29 @@
+{
+  "provider": "zyte",
+  "sources": [
+    "_original/zyte-stats-api-openapi.yaml",
+    "_original/zyte-zyte-api-openapi.yaml"
+  ],
+  "outputs": [
+    "zyte-stats-api-openapi.yml",
+    "zyte-extract-api-openapi.yml"
+  ],
+  "archived": [],
+  "errors": [],
+  "warnings": [],
+  "notes": [
+    "sourced from openapi/_original/ (2 archived document(s)); previously refined output at the top level was skipped rather than re-split",
+    "zyte-stats-api-openapi.yaml: upgraded openapi 3.0.3 -> OpenAPI 3.2.0",
+    "zyte-stats-api-openapi.yaml: tagged paths GET /api/stats -> Stats",
+    "zyte-stats-api-openapi.yaml: tagged paths GET /api/v1/stats -> Stats",
+    "zyte-stats-api-openapi.yaml: declared missing tag: Stats",
+    "zyte-zyte-api-openapi.yaml: upgraded openapi 3.0.3 -> OpenAPI 3.2.0",
+    "zyte-zyte-api-openapi.yaml: tagged paths POST /extract -> Extract",
+    "zyte-zyte-api-openapi.yaml: declared missing tag: Extract",
+    "apis.yml register: already-registered"
+  ],
+  "skipped": [
+    "zyte-extract-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "zyte-stats-api-openapi.yml: previously refined output, superseded by openapi/_original/"
+  ]
+}

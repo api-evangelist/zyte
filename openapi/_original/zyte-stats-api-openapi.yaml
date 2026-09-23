@@ -1,3 +1,5 @@
+# x-archived-from: zyte-stats-api-openapi.yaml
+# x-archived-on: 2026-09-16
 components:
   schemas:
     CurrencyValue:

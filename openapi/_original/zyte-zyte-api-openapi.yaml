@@ -1,3 +1,5 @@
+# x-archived-from: zyte-zyte-api-openapi.yaml
+# x-archived-on: 2026-09-16
 openapi: 3.0.3
 info:
   title: Web Data Extraction API
