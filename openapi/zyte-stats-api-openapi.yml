@@ -361,6 +361,175 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
+    StatsResponseV1:
+      properties:
+        page:
+          minimum: 1
+          type: integer
+        page_size:
+          maximum: 500
+          minimum: 1
+          type: integer
+        results:
+          items:
+            $ref: '#/components/schemas/StatsResultV1'
+          type: array
+        total_result_count:
+          minimum: 0
+          type: integer
+      required:
+      - page
+      - page_size
+      - results
+      - total_result_count
+      type: object
+    StatsResult:
+      properties:
+        billed_traffic_bytes:
+          description: 'Total billed traffic in bytes over the selected timeframe (and per domain when `groupby_domain=true`).
+
+
+            It is non-zero only for requests that trigger per-GB billing, such as those using
+
+            [`ipType:residential`](/zyte-api/usage/reference.md) or extended geolocations; it is `0` otherwise.'
+          minimum: 0
+          type: integer
+        cost_microusd_avg:
+          minimum: 0
+          type: number
+        cost_microusd_p80:
+          minimum: 0
+          type: number
+        cost_microusd_total:
+          minimum: 0
+          type: number
+        day:
+          format: date-time
+          type: string
+        domain:
+          maxLength: 256
+          minLength: 0
+          type: string
+        domain_health:
+          description: 'Domain health information. Returned only when `include_domain_health=true` and `groupby_domain=true`.
+
+
+            It aims to show detailed stats from your Top 100 most requested domains in the last 7 days. Domains not recently used or not within the Top 100 domains will have a `null` value. These stats are not real-time; they are calculated once every 3 hours.'
+          type:
+          - object
+          - 'null'
+          properties:
+            global_avg_success_rate_24h:
+              type: string
+            global_avg_success_rate_7d:
+              type: string
+            my_avg_price_microusd_24h:
+              type: string
+            my_avg_price_microusd_7d:
+              type: string
+            my_avg_response_time_24h:
+              type: string
+            my_avg_response_time_7d:
+              type: string
+            my_requests_24h:
+              type: integer
+            my_requests_7d:
+              type: integer
+            my_success_rate_24h:
+              type: string
+            my_success_rate_7d:
+              type: string
+            status:
+              type: string
+              enum:
+              - healthy
+              - possible_misconfiguration
+              - issue_under_investigation
+              - possible_performance_issue
+            total_spent_microusd_24h:
+              type: string
+            total_spent_microusd_7d:
+              type: string
+            total_successful_requests_24h:
+              type: integer
+            total_successful_requests_7d:
+              type: integer
+        hour:
+          format: date-time
+          type: string
+        month:
+          format: date-time
+          type: string
+        organization_id:
+          type: integer
+        request_count:
+          minimum: 1
+          type: integer
+        response_time_sec_avg:
+          minimum: 0
+          type: number
+        response_time_sec_p80:
+          minimum: 0
+          type: number
+        status_codes:
+          items:
+            properties:
+              code:
+                type:
+                - integer
+                - 'null'
+              count:
+                minimum: 0
+                type: integer
+            type: object
+          type: array
+        year:
+          format: date-time
+          type: string
+      required:
+      - billed_traffic_bytes
+      - cost_microusd_avg
+      - cost_microusd_p80
+      - cost_microusd_total
+      - organization_id
+      - request_count
+      - response_time_sec_avg
+      - response_time_sec_p80
+      type: object
+    CurrencyValue:
+      description: 'A monetary amount in a single currency.
+
+
+        Used by the multicurrency (`/api/v1/stats`) cost fields, where each cost is reported as a list with one `CurrencyValue` entry per currency present in your usage.'
+      properties:
+        currency:
+          description: Three-letter [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) currency code (e.g. `USD`, `EUR`, `GBP`).
+          maxLength: 3
+          minLength: 3
+          type: string
+        value:
+          description: The amount, in micro-units of `currency` (divide by 1,000,000 to get the amount in the currency's main unit).
+          minimum: 0
+          type: number
+      required:
+      - currency
+      - value
+      type: object
+    ValidationError:
+      properties:
+        detail:
+          properties:
+            <location>:
+              properties:
+                <field_name>:
+                  items:
+                    type: string
+                  type: array
+              type: object
+          type: object
+        message:
+          type: string
+      type: object
     StatsResultV1:
       properties:
         billed_traffic_bytes:
@@ -492,46 +661,9 @@ components:
       - response_time_sec_avg
       - response_time_sec_p80
       type: object
-    StatsResponseV1:
-      properties:
-        page:
-          minimum: 1
-          type: integer
-        page_size:
-          maximum: 500
-          minimum: 1
-          type: integer
-        results:
-          items:
-            $ref: '#/components/schemas/StatsResultV1'
-          type: array
-        total_result_count:
-          minimum: 0
-          type: integer
-      required:
-      - page
-      - page_size
-      - results
-      - total_result_count
-      type: object
     HTTPError:
       properties:
         detail:
-          type: object
-        message:
-          type: string
-      type: object
-    ValidationError:
-      properties:
-        detail:
-          properties:
-            <location>:
-              properties:
-                <field_name>:
-                  items:
-                    type: string
-                  type: array
-              type: object
           type: object
         message:
           type: string
@@ -557,138 +689,6 @@ components:
       - page_size
       - results
       - total_result_count
-      type: object
-    CurrencyValue:
-      description: 'A monetary amount in a single currency.
-
-
-        Used by the multicurrency (`/api/v1/stats`) cost fields, where each cost is reported as a list with one `CurrencyValue` entry per currency present in your usage.'
-      properties:
-        currency:
-          description: Three-letter [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) currency code (e.g. `USD`, `EUR`, `GBP`).
-          maxLength: 3
-          minLength: 3
-          type: string
-        value:
-          description: The amount, in micro-units of `currency` (divide by 1,000,000 to get the amount in the currency's main unit).
-          minimum: 0
-          type: number
-      required:
-      - currency
-      - value
-      type: object
-    StatsResult:
-      properties:
-        billed_traffic_bytes:
-          description: 'Total billed traffic in bytes over the selected timeframe (and per domain when `groupby_domain=true`).
-
-
-            It is non-zero only for requests that trigger per-GB billing, such as those using
-
-            [`ipType:residential`](/zyte-api/usage/reference.md) or extended geolocations; it is `0` otherwise.'
-          minimum: 0
-          type: integer
-        cost_microusd_avg:
-          minimum: 0
-          type: number
-        cost_microusd_p80:
-          minimum: 0
-          type: number
-        cost_microusd_total:
-          minimum: 0
-          type: number
-        day:
-          format: date-time
-          type: string
-        domain:
-          maxLength: 256
-          minLength: 0
-          type: string
-        domain_health:
-          description: 'Domain health information. Returned only when `include_domain_health=true` and `groupby_domain=true`.
-
-
-            It aims to show detailed stats from your Top 100 most requested domains in the last 7 days. Domains not recently used or not within the Top 100 domains will have a `null` value. These stats are not real-time; they are calculated once every 3 hours.'
-          type:
-          - object
-          - 'null'
-          properties:
-            global_avg_success_rate_24h:
-              type: string
-            global_avg_success_rate_7d:
-              type: string
-            my_avg_price_microusd_24h:
-              type: string
-            my_avg_price_microusd_7d:
-              type: string
-            my_avg_response_time_24h:
-              type: string
-            my_avg_response_time_7d:
-              type: string
-            my_requests_24h:
-              type: integer
-            my_requests_7d:
-              type: integer
-            my_success_rate_24h:
-              type: string
-            my_success_rate_7d:
-              type: string
-            status:
-              type: string
-              enum:
-              - healthy
-              - possible_misconfiguration
-              - issue_under_investigation
-              - possible_performance_issue
-            total_spent_microusd_24h:
-              type: string
-            total_spent_microusd_7d:
-              type: string
-            total_successful_requests_24h:
-              type: integer
-            total_successful_requests_7d:
-              type: integer
-        hour:
-          format: date-time
-          type: string
-        month:
-          format: date-time
-          type: string
-        organization_id:
-          type: integer
-        request_count:
-          minimum: 1
-          type: integer
-        response_time_sec_avg:
-          minimum: 0
-          type: number
-        response_time_sec_p80:
-          minimum: 0
-          type: number
-        status_codes:
-          items:
-            properties:
-              code:
-                type:
-                - integer
-                - 'null'
-              count:
-                minimum: 0
-                type: integer
-            type: object
-          type: array
-        year:
-          format: date-time
-          type: string
-      required:
-      - billed_traffic_bytes
-      - cost_microusd_avg
-      - cost_microusd_p80
-      - cost_microusd_total
-      - organization_id
-      - request_count
-      - response_time_sec_avg
-      - response_time_sec_p80
       type: object
   securitySchemes:
     BasicAuth:

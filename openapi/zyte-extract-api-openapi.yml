@@ -570,69 +570,108 @@ paths:
       - Extract
 components:
   schemas:
-    GoToOptions:
-      description: Used to customise navigation options
+    ProductList:
       type: object
       properties:
-        waitUntil:
-          description: 'When to consider navigation succeeded, defaults to load. Events can be either:
+        breadcrumbs:
+          description: 'A list of breadcrumbs (a specific navigation element)
 
-            * load - consider navigation to be finished when the load event is fired.
-
-            * networkidle0 -  consider navigation to be finished when there are no more than 0 network connections for at least 500 ms
-
-            * domcontentloaded - consider navigation to be finished when the DOMContentLoaded event is fired.
+            with optional `name` and `url`.
 
             '
+          example:
+          - name: Home
+            url: https://example.com/
+          - name: Cell Phones
+            url: https://example.com/cell-phones
+          - name: Cell Phones & Accessories
+          type: array
+          items:
+            $ref: '#/components/schemas/Breadcrumb'
+        products:
+          description: List of products available on this page.
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                description: 'URL of a detailed product page.
+
+                  Pass this URL with "product: true" in the request to
+
+                  extract detailed information about the product.
+
+                  '
+                type: string
+                example: https://example.com/products/1/
+              name:
+                description: The name of the product.
+                type: string
+                example: Product name
+              price:
+                $ref: '#/components/schemas/Price'
+              currencyRaw:
+                $ref: '#/components/schemas/CurrencyRaw'
+              currency:
+                $ref: '#/components/schemas/Currency'
+              regularPrice:
+                $ref: '#/components/schemas/RegularPrice'
+              mainImage:
+                $ref: '#/components/schemas/Image'
+                description: The main image of the item.
+              metadata:
+                $ref: '#/components/schemas/MetadataListItem'
+            required:
+            - metadata
+        url:
+          description: URL of a page where this product list was extracted.
           type: string
+          example: https://example.com/products/
+        metadata:
+          $ref: '#/components/schemas/MetadataList'
+        categoryName:
+          description: Name of the category in which the listed products are.
+          type: string
+          example: Sports & Outdoors
+      required:
+      - url
+      - metadata
+    Gtin:
+      type: object
+      description: 'Standardized GTIN product identifier which is unique for a product across different sellers.
+
+        '
+      example:
+        type: isbn13
+        value: 9781933624341
+      properties:
+        type:
+          description: '`gtin14` corresponds to former names
+
+            *EAN/UCC-14*, *SCC-14*, *DUN-14*, *UPC Case Code*,
+
+            *UPC Shipping Container Code*.
+
+
+            `gtin13` also includes the *jan* (japanese article number).
+
+            '
           enum:
-          - load
-          - networkidle0
-          - domcontentloaded
-          default: load
-        timeout:
-          description: Maximum navigation time in seconds, defaults to 30 seconds. Pass 0 to disable timeout.
-          type: integer
-          default: 30
-          minimum: 0
-    scrollTo:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - scrollTo
-            description: 'Scroll the window to a particular place in the document.
-
-
-              To set the target location, use one (and only one) of the following:
-
-
-              - `top` and `left`, to set the target coordinates in pixels.
-
-
-              - `selector`, to target the center of an HTML element.
-
-              '
-          top:
-            description: Specifies the number of pixels along the Y axis to scroll the window.
-            type: integer
-          left:
-            description: Specifies the number of pixels along the X axis to scroll the window.
-            type: integer
-            default: 0
-          selector:
-            allOf:
-            - $ref: '#/components/schemas/ActionSelector'
-            - description: If passed scrolls to specified selector instead of scrolling to specified coordinates within page. If selector is not found no scroll is performed. If more than one elements match selector it scrolls to the first one.
-        required:
-        - action
-      - $ref: '#/components/schemas/Action'
-    OrganicResultURL:
-      type: string
-      pattern: ^https?://[\S]+$
-      description: Result URL.
-      example: https://www.squid-cache.org/
-      additionalProperties: false
+          - gtin8
+          - gtin13
+          - gtin14
+          - isbn10
+          - isbn13
+          - ismn
+          - issn
+          - upc
+          type: string
+        value:
+          description: The GTIN value as a string.
+          type: string
+      required:
+      - type
+      - value
     Session:
       description: 'Parameters to create or reuse a
 
@@ -684,304 +723,21 @@ components:
             '
           type: string
       type: object
-    hide:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - hide
-            description: Hide an element.
-          selector:
-            $ref: '#/components/schemas/ActionSelector'
-        required:
-        - action
-        - selector
-      - $ref: '#/components/schemas/Action'
-    Viewport:
-      type: object
-      description: '[Browser viewport](https://developer.mozilla.org/en-US/docs/Glossary/Viewport).
-
-        '
-      properties:
-        width:
-          type: integer
-          description: Viewport width, in pixels.
-          default: 1920
-          minimum: 320
-          maximum: 5120
-        height:
-          type: integer
-          description: Viewport height, in pixels.
-          default: 1080
-          minimum: 360
-          maximum: 4096
-    SessionContextParameters:
-      description: 'Parameters to create a server-managed session for a given
-
-        sessionContext).
+    ActionSequence:
+      description: 'Sequence of browser actions to execute.
 
 
-        [See an example](/zyte-api/usage/features.md).
-
-        See also:
-
-        actions.
-
-        '
-      type: object
-      properties:
-        actions:
-          $ref: '#/components/schemas/SessionContextActionSequence'
-    HTTPHeader:
-      type: object
-      description: A header name and value.
-      required:
-      - name
-      - value
-      properties:
-        name:
-          type: string
-          description: The name of the header
-          minLength: 1
-        value:
-          type: string
-          description: The value of the header
-      example:
-        name: Content-Type
-        value: text/html; charset=utf-8
-    Color:
-      description: Color of the product.
-      type: string
-      example: Red
-    waitForTimeout:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - waitForTimeout
-            description: 'Pause script execution for the given number of seconds before
-
-              continuing.
+        Select an action below to see its API reference.
 
 
-              If the value of timeout is greater than the remaining browser
+        When using actions, you get the
 
-              execution time, then this action ends with an error.
+        actions
 
-              '
-          timeout:
-            $ref: '#/components/schemas/ActionTimeout'
-        required:
-        - action
-      - $ref: '#/components/schemas/Action'
-    SessionContext:
-      description: 'User-defined name-value pairs to
-
-        [request a server-managed session](/zyte-api/usage/features.md)
-
-        initialized with
-
-        sessionContextParameters).
+        response field with debug information about action execution.
 
 
-        For every subsequent request with the same session context, Zyte API
-
-        will either reuse an available session created for the same session
-
-        context or create a new session using
-
-        sessionContextParameters).
-
-
-        Server-managed sessions expire after 4 hours or 3 ban responses. If you
-
-        are targeting websites that silently expire their sessions before the
-
-        4-hour mark, i.e. they revert the effects of your
-
-        sessionContextParameters
-
-        but requests continue working as expected otherwise, consider using
-
-        [client-managed sessions](/zyte-api/usage/features.md)
-
-        for higher session control.
-
-
-        [See an example](/zyte-api/usage/features.md).
-
-        See also:
-
-        requestCookies,
-
-        responseCookies.
-
-        '
-      type: array
-      items:
-        type: object
-        maxItems: 10
-        properties:
-          name:
-            type: string
-            description: Name of the context identifier.
-            minLength: 1
-            maxLength: 30
-          value:
-            type: string
-            description: Value of the context identifier.
-            minLength: 1
-            maxLength: 100
-        required:
-        - name
-        - value
-    JobPosting:
-      type: object
-      properties:
-        jobTitle:
-          description: The title of the job.
-          type: string
-          example: Regional Manager
-        datePublished:
-          description: 'Publication date of the job posting.
-
-            ISO-formatted with ''T'' separator, may contain a timezone.
-
-            '
-          type: string
-          example: '2019-06-19T00:00:00'
-        datePublishedRaw:
-          description: 'Same date as ''datePublished'', but before parsing/normalization,
-
-            i.e. as it appears on the website.
-
-            '
-          type: string
-          example: 19 June 2019
-        validThrough:
-          description: 'The date after which the job posting is not valid,
-
-            e.g. the end of an offer.
-
-            ISO-formatted with ‘T’ separator, may contain a timezone.
-
-            '
-          type: string
-          example: '2019-08-20T00:00:00'
-        description:
-          description: 'A description of the job posting including sub-headings,
-
-            with newline separators.
-
-            '
-          type: string
-          example: Job Description ...
-        descriptionHtml:
-          description: 'Simplified HTML of the description, including sub-headings,
-
-            image captions and embedded content.
-
-            '
-          type: string
-          example: <article>HTML for Job Description ...
-        employmentType:
-          description: 'Type of employment
-
-            (e.g. full-time, part-time, contract, temporary, seasonal, internship).
-
-            '
-          type: string
-          example: Full-time
-        hiringOrganization:
-          description: Information about the organization offering the job position.
-          type: object
-          properties:
-            name:
-              description: Name of the organization.
-              type: string
-              example: ACME Corp.
-          required:
-          - name
-        baseSalary:
-          description: 'The base salary of the job or of an employee in the proposed role.
-
-            '
-          type: object
-          properties:
-            raw:
-              description: Salary amount as it appears on the website.
-              example: $53,251 a year
-              type: string
-            valueMax:
-              description: 'The maximum value of the base salary as a number string.
-
-                In case of only one value given for the salary instead of a range, valueMax is used to represent it.
-
-                '
-              example: '53251.0'
-              type: string
-            currency:
-              description: 'Currency associated with the salary amount.
-
-                ISO 4217 standard.
-
-                '
-              type: string
-              example: USD
-            currencyRaw:
-              description: Currency associated with the salary amount, without normalization.
-              type: string
-              example: $
-        jobLocation:
-          description: 'A (typically single) geographic location associated with the job position.
-
-            '
-          type: object
-          properties:
-            raw:
-              description: Job location as it appears on the website.
-              type: string
-              example: West New York, NJ 07093
-          required:
-          - raw
-        url:
-          description: URL of a page where this job posting was extracted.
-          type: string
-          example: https://example.com/job
-        metadata:
-          $ref: '#/components/schemas/Metadata__metadata'
-      required:
-      - url
-      - metadata
-    Action:
-      description: Action to perform.
-      type: object
-      properties:
-        onError:
-          $ref: '#/components/schemas/onError'
-      example:
-        action: click
-        selector:
-          type: css
-          value: '#main'
-    Availability:
-      description: "Availability, as a string. Allowed values:\n\n  * `\"InStock\"` - includes limited availability, presale,\n    preorder, and in-store only.\n  * `\"OutOfStock\"` - includes discontinued and sold out.\n"
-      example: InStock
-      type: string
-      enum:
-      - InStock
-      - OutOfStock
-    Price:
-      description: 'The price at which the product is being offered. If there is only one price associated with the offer, it is returned in this field.
-
-        '
-      type: string
-      pattern: ^[0-9]+(\.[0-9]+)?$
-      example: '149'
-    SessionContextActionSequence:
-      description: 'Actions to run to initialize a server-managed session for a given
-
-        sessionContext).
+        [See an example](/zyte-api/usage/browser.md).
 
         '
       type: array
@@ -1007,127 +763,102 @@ components:
         - $ref: '#/components/schemas/waitForResponse'
         - $ref: '#/components/schemas/waitForSelector'
         - $ref: '#/components/schemas/waitForTimeout'
-    ActionTimeout:
-      description: Maximum wait time in seconds.
-      type: number
-      minimum: 0.0
-      default: 5.0
-      maximum: 15.0
-    SerpOptions:
-      type: object
-      description: Options for SERP extraction.
+    MetadataListItem:
+      description: Item-level metadata for list data types.
       properties:
-        extractFrom:
-          type: string
-          enum:
-          - browserHtml
-          - httpResponseBody
-          description: 'Input to use for extraction, either
+        probability:
+          description: 'Probability that extracted item in a list is a valid item.
 
-            httpResponseBody
+            Items which are unlikely to be valid are not returned,
 
-            or
+            so normally no extra thresholding is needed for list items.
 
-            browserHtml.
-
-
-            If not specified, `httpResponseBody` is currently used by default.
-
-            In the future, the default value may depend on the target website.
+            This probability is not calibrated.
 
             '
-        keyword:
-          type: string
-          description: 'The keyword or search phrase to query in the SERP extraction process.
-
-            Example: `"best scraping framework"`
-
-            '
-    ExtractionOptions:
-      description: 'Options for automatic extraction.
-
-        '
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.34
+      required:
+      - probability
+    CapturedResponse:
       type: object
       properties:
-        extractFrom:
-          allOf:
-          - $ref: '#/components/schemas/ExtractFrom'
-          description: 'extractFrom
-
-            override for this particular extraction type.
+        interceptionStatus:
+          type: object
+          description: 'Exit status of the network capture.
 
 
-            Using
+            If `interceptionStatus.status` is `error`, `httpResponseBody` is
 
-            extractFrom
+            not delivered.
 
-            instead is recommended.
+
+            Possible causes of error include all matching responses exceeding
+
+            the maximum total body size of 5 MiB.
 
             '
-        userHtml:
+          properties:
+            status:
+              type: string
+              enum:
+              - success
+              - error
+            error:
+              type: string
+              description: 'Error message.
+
+
+                This field is only present if `interceptionStatus.status` is
+
+                `error`.
+
+                '
+        statusCode:
+          type: integer
+          description: HTTP status code of the captured response.
+        httpResponseBody:
           type: string
-          description: 'HTML content provided by the user for extraction.
+          format: byte
+          description: '[Base64](https://en.wikipedia.org/wiki/Base64)-encoded body of the
 
-            Required when extractFrom is set to `"userHtml"`.
+            captured response.
+
+
+            To get this response field, set the
+
+            [networkCapture[].httpResponseBody](https://docs.zyte.com/zyte-api/usage/reference.html#operation/extract/request/networkCapture.httpResponseBody)
+
+            request field to `true`.
 
             '
-          minLength: 1
-          maxLength: 2621440
-    scrollBottom:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - scrollBottom
-            description: "Continuously scroll down the page while it keeps loading more content.\n\nThe action halts if any of the following conditions are met:\n\n  - the timeout or the total browser execution time is reached\n  - the page does not load any new content for the duration of\n    maxScrollDelay\n  - maxPageHeight or maxScrollCount have been reached\n"
-          timeout:
-            description: Maximum wait time, in seconds.
-            type: number
-            minimum: 0.0
-            default: 15.0
-            maximum: 30.0
-          maxScrollDelay:
-            description: 'The maximum amount of time to wait for each scroll to complete,
-
-              in seconds.
-
-
-              If the page does not not load any content during this time, the
-
-              action is deemed to have been completed.
-
-              '
-            type: number
-            default: 5
-            minimum: 0.5
-            maximum: 10
-          maxPageHeight:
-            description: Maximum height (in pixels) until which the browser keeps scrolling down the page
-            type: integer
-          maxScrollCount:
-            description: 'The maximum number of scrolls to perform.
-
-
-              If the page does not yield any fresh content, then the action
-
-              will finish execution before maxScrollCount is reached.
-
-              '
-            type: integer
-          scrollStep:
-            description: 'The number of pixels for each scroll.
-
-              It can be used for gradual scrolling.
-
-              If it''s specified, maxScrollDelay will be used as fixed time waiting instead of waiting for new contents.
-
-              '
-            type: integer
-            default: 0
-            minimum: 0
-        required:
-        - action
-      - $ref: '#/components/schemas/Action'
+        url:
+          type: string
+          format: uri
+          description: Captured response URL.
+        headers:
+          type: object
+          description: Captured response headers.
+        filter:
+          $ref: '#/components/schemas/NetworkCaptureFilter'
+        request:
+          type: object
+          description: Captured request that got the captured response.
+          properties:
+            url:
+              type: string
+              description: URL of the captured request.
+            headers:
+              type: object
+              description: Headers of the captured request.
+            method:
+              type: string
+              description: HTTP method of the captured request.
+            body:
+              type: string
+              description: Body of the captured request, if any.
     ActionResult:
       description: 'Returns detailed information about the elapsed time and errors for a particular action.
 
@@ -1177,614 +908,6 @@ components:
       - action
       - elapsedTime
       - status
-    CurrencyRaw:
-      description: 'The currency as given on the website, without extra normalization (for example, both "$" and "USD" are possible currencies).
-
-        '
-      type: string
-      example: $
-    CustomAttribute:
-      type: object
-      properties:
-        description:
-          type: string
-          maxLength: 300
-        type:
-          type: string
-          enum:
-          - boolean
-          - string
-          - number
-          - integer
-          - array
-          - object
-      discriminator:
-        propertyName: type
-        mapping:
-          boolean: '#/components/schemas/CustomAttributeBoolean'
-          string: '#/components/schemas/CustomAttributeString'
-          number: '#/components/schemas/CustomAttributeNumber'
-          integer: '#/components/schemas/CustomAttributeInteger'
-          array: '#/components/schemas/CustomAttributeArray'
-          object: '#/components/schemas/CustomAttributeObject'
-    ArticleNavigation:
-      type: object
-      properties:
-        nextPage:
-          $ref: '#/components/schemas/PaginationNext'
-        pageNumber:
-          $ref: '#/components/schemas/PageNumber'
-        items:
-          description: List of articles available on this page.
-          type: array
-          items:
-            type: object
-            properties:
-              url:
-                description: 'URL of a detailed article page.
-
-                  Pass this URL with "article: true" in the request to
-
-                  extract detailed information about the article.
-
-                  '
-                type: string
-                example: https://example.com/articles/1/
-              name:
-                description: The name of the article or article link text.
-                type: string
-                example: Article name
-              datePublished:
-                description: 'Publication date. ISO-formatted with ''T'' separator, may contain a timezone.
-
-                  '
-                type: string
-                example: '2019-06-19T00:00:00'
-              datePublishedRaw:
-                description: 'Same date as "datePublished", but before parsing/normalization, i.e. as
-
-                  it appears on the website.
-
-                  '
-                type: string
-                example: June 19, 2019
-              metadata:
-                $ref: '#/components/schemas/MetadataListItem'
-            required:
-            - url
-            - metadata
-        url:
-          description: URL of a page containing the list of articles.
-          type: string
-          example: https://example.com/articles/
-        metadata:
-          $ref: '#/components/schemas/MetadataList'
-      required:
-      - url
-      - metadata
-    Url:
-      description: URL of a page where this product was extracted.
-      type: string
-      example: https://example.com/product/
-    type:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - type
-            description: Type text into an element.
-          selector:
-            $ref: '#/components/schemas/ActionSelector'
-          text:
-            description: 'Text to type into a focused element.
-
-
-              To press a special key, use the `keyPress` action instead.
-
-              '
-            type: string
-          delay:
-            description: Time to wait between key presses, in seconds.
-            type: number
-            minimum: 0
-            default: 0
-        required:
-        - selector
-        - text
-        - action
-      - $ref: '#/components/schemas/Action'
-    ExtractFrom:
-      type: string
-      enum:
-      - httpResponseBody
-      - browserHtml
-      - userHtml
-      description: '[Extraction source](/zyte-api/usage/extract/index.md).
-
-
-        `httpResponseBody` extracts from
-
-        httpResponseBody.
-
-        It is usually faster and cheaper.
-
-
-        `browserHtml` extracts from both
-
-        browserHtml
-
-        and
-
-        screenshot.
-
-        It typically improves quality over `httpResponseBody`, but is not as
-
-        robust in case of rendering issues.
-
-
-        `userHtml` extracts from user-provided HTML content. When this
-
-        option is set, the
-
-        userHtml
-
-        field must contain the HTML to extract from. No download request
-
-        is performed and no browser rendering takes place. The
-
-        url
-
-        field is still required.
-
-
-        If not specified, `browserHtml` is currently used by default for
-
-        [AI extraction](/zyte-api/usage/extract/index.md),
-
-        while `httpResponseBody` is used by default for
-
-        [non-AI extraction](/zyte-api/usage/extract/index.md).
-
-        In the future, the default value may depend on the target website.
-
-
-        This field does not work with
-
-        serp;
-
-        for `serp`, use
-
-        serpOptions.extractFrom
-
-        instead.
-
-        '
-    Mpn:
-      description: The Manufacturer Part Number (MPN) of the product. It is issued by the manufacturer, and is the same across different e-commerce websites.
-      type: string
-      example: code-123
-    waitForSelector:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - waitForSelector
-            description: 'Wait for the selector to appear.
-
-
-              If at the moment of calling the method the selector already
-
-              exists, the action will return immediately.
-
-
-              Also, the action will return immediately after the first matching
-
-              selector appears.
-
-
-              For a usage example, see the
-
-              [web scraping tutorial](/web-scraping/tutorial/js.md).
-
-              '
-          selector:
-            $ref: '#/components/schemas/ActionSelector'
-          timeout:
-            $ref: '#/components/schemas/ActionTimeout'
-        required:
-        - selector
-        - action
-      - $ref: '#/components/schemas/Action'
-    NavigationRequest:
-      type: object
-      properties:
-        url:
-          description: URL of the item.
-          type: string
-          example: https://example.com/products/category/1
-        name:
-          description: The name or link text of the item.
-          type: string
-          example: In Her Wake
-        method:
-          description: HTTP method associated with the navigation request for product, subcategory
-          type: string
-          enum:
-          - GET
-          - POST
-          - PUT
-          - DELETE
-          - OPTIONS
-          - TRACE
-          - PATCH
-        headers:
-          description: List of headers associated with the request.
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-                description: Header name.
-              value:
-                type: string
-                description: Header value.
-        body:
-          description: Base64-encoded body of the request.
-          type: string
-          format: byte
-        metadata:
-          $ref: '#/components/schemas/MetadataListItem'
-      required:
-      - url
-      - metadata
-    hover:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - hover
-            description: 'Hover over a visible element.
-
-
-              Elements that are either hidden or not present will cause the action to
-
-              exit with an error.
-
-              '
-          selector:
-            $ref: '#/components/schemas/ActionSelector'
-        required:
-        - selector
-        - action
-      - $ref: '#/components/schemas/Action'
-    Weight:
-      type: object
-      properties:
-        value:
-          description: 'A weight value expressed as a floating point number.
-
-            '
-          type: number
-          example: 120.0
-        unit:
-          description: 'A normalized unit of weight, like kilogram / ounce / pound and others.
-
-            '
-          type: string
-          example: kilogram
-        rawUnit:
-          description: 'A unit of weight without normalization - how it was extracted from the page.
-
-            Normalized version of the rawUnit is in ''unit'' attribute.
-
-            '
-          type: string
-          example: kg
-    goto:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - goto
-            description: 'Navigate to a new page.
-
-
-              This action waits until page load event is fired with a default timeout
-
-              of 30 seconds.
-
-              '
-          url:
-            description: URL to navigate page to. The url should include scheme
-            type: string
-          options:
-            $ref: '#/components/schemas/GoToOptions'
-        required:
-        - url
-        - action
-      - $ref: '#/components/schemas/Action'
-    onError:
-      description: 'Handle errors encountered while executing a particular action.
-
-        * continue - When a particular action fails, the action sequence continues, executing the next actions
-
-        * return - When a particular actions fails, the action sequence stops, not executing any more actions
-
-
-        When an action sequence finishes prematurely the service will return the entire response body up until the
-
-        point of execution.
-
-        '
-      type: string
-      enum:
-      - continue
-      - return
-      default: return
-    click:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - click
-            description: Click on an element.
-          selector:
-            $ref: '#/components/schemas/ActionSelector'
-          button:
-            description: Mouse button to click
-            type: string
-            enum:
-            - left
-            - right
-            - middle
-            default: left
-          delay:
-            description: Time to wait between mousedown and mouseup, in seconds.
-            type: number
-            minimum: 0
-            maximum: 3
-            default: 0
-          waitForNavigationTimeout:
-            description: 'Maximum waiting time in seconds for the navigation event during the click action.
-
-
-              If navigation happens within the defined duration, then
-
-              waiting is halted and the next action is executed after the new
-
-              is page is loaded. If the page loading does not finish then the next action
-
-              ends with an error, and following actions may not be executed, depending
-
-              on the onError property. If no navigation happens within the defined
-
-              duration then the next action is executed.
-
-              '
-            type: number
-            minimum: 0
-            maximum: 20
-            default: 0
-        required:
-        - selector
-        - action
-      - $ref: '#/components/schemas/Action'
-    UrlPattern:
-      description: 'A string to compare with a URL according to `urlMatchingOptions`.
-
-        '
-      type: string
-      example:
-      - https://example.com/api
-      - /api/store/fulfilment
-    Author:
-      description: Author of the article.
-      type: object
-      properties:
-        name:
-          description: Full name of the author, e.g. "Alice".
-          type: string
-        nameRaw:
-          description: Text from which this author name was extracted, e.g. "Alice and Bob".
-          type: string
-      example:
-        name: Alice
-        nameRaw: Alice and Bob
-      required:
-      - name
-    waitForResponse:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - waitForResponse
-            description: Wait until the response from a specific URL has been received.
-          urlPattern:
-            $ref: '#/components/schemas/UrlPattern'
-          urlMatchingOptions:
-            $ref: '#/components/schemas/PatternMatchingOptions'
-          timeout:
-            $ref: '#/components/schemas/ActionTimeout'
-        example:
-        - urlPattern: /store/api
-          urlMatchingOptions: contains
-        - urlPattern: https://example.org/store/
-          urlMatchingOptions: startsWith
-        required:
-        - urlPattern
-        - action
-      - $ref: '#/components/schemas/Action'
-    select:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - select
-            description: 'Pick single or multiple values from a `<select>` element.
-
-              '
-          selector:
-            $ref: '#/components/schemas/ActionSelector'
-          values:
-            description: 'Values of options to select.
-
-
-              If the `<select>` has the multiple attribute, all values are
-
-              considered, otherwise only the first one is taken into account.
-
-              '
-            type: array
-            items:
-              type: string
-        required:
-        - selector
-        - values
-        - action
-      - $ref: '#/components/schemas/Action'
-    RequestHeaders:
-      description: 'HTTP request headers.
-
-
-        Can only be used in a
-
-        [browser request](/zyte-api/usage/browser.md).
-
-        For
-
-        [HTTP requests](/zyte-api/usage/http.md), see
-
-        customHttpRequestHeaders.
-
-
-        At the moment it only supports the
-
-        [Referer header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referer).
-
-
-        [See an example](/zyte-api/usage/browser.md).
-
-        '
-      properties:
-        referer:
-          description: '[Referer header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referer).
-
-            '
-          type: string
-          example: https://search.example/
-    Gtin:
-      type: object
-      description: 'Standardized GTIN product identifier which is unique for a product across different sellers.
-
-        '
-      example:
-        type: isbn13
-        value: 9781933624341
-      properties:
-        type:
-          description: '`gtin14` corresponds to former names
-
-            *EAN/UCC-14*, *SCC-14*, *DUN-14*, *UPC Case Code*,
-
-            *UPC Shipping Container Code*.
-
-
-            `gtin13` also includes the *jan* (japanese article number).
-
-            '
-          enum:
-          - gtin8
-          - gtin13
-          - gtin14
-          - isbn10
-          - isbn13
-          - ismn
-          - issn
-          - upc
-          type: string
-        value:
-          description: The GTIN value as a string.
-          type: string
-      required:
-      - type
-      - value
-    reload:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - reload
-            description: 'Reload the page.
-
-
-              This action waits until page load event is fired with a default timeout
-
-              of 30 seconds.
-
-              '
-          options:
-            $ref: '#/components/schemas/GoToOptions'
-        required:
-        - action
-      - $ref: '#/components/schemas/Action'
-    Metadata__metadata:
-      description: Extracted item metadata for single-item data types.
-      type: object
-      properties:
-        probability:
-          description: 'Probability that extracted item is of requested data type.
-
-            It is closer to 0 in case this page does not contain requested data type.
-
-            For example, when single product extraction is requested with
-
-            "product: true", but a page does not contain a product,
-
-            probability would be close to 0.
-
-            If an item of requested type can be extracted from a page,
-
-            then probability is closer to 1.
-
-            Recommended probability threshold is 0.5,
-
-            but we will return extracted data even if probability is very low.
-
-            '
-          type: number
-          minimum: 0.0
-          maximum: 1.0
-          example: 0.87
-        dateDownloaded:
-          $ref: '#/components/schemas/DateDownloaded'
-      required:
-      - probability
-      - dateDownloaded
-    setLocation:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - setLocation
-            description: 'Configure a physical address on the website.
-
-
-              This action uses website-specific knowledge to find and fill a location
-
-              form.
-
-
-              It may not work on some websites. If that’s the case, please
-
-              [reach out to us](https://support.zyte.com/support/tickets/new).
-
-              '
-          address:
-            $ref: '#/components/schemas/PostalAddress'
-        required:
-        - action
-      - $ref: '#/components/schemas/Action'
     ArticleList:
       type: object
       properties:
@@ -1873,56 +996,6 @@ components:
       required:
       - url
       - metadata
-    CustomHttpRequestHeader:
-      properties:
-        name:
-          type: string
-          maxLength: 200
-          example: X-APOLLO-OPERATION-NAME
-        value:
-          type: string
-          maxLength: 7000
-          example: nearByNodes
-    ActionSequence:
-      description: 'Sequence of browser actions to execute.
-
-
-        Select an action below to see its API reference.
-
-
-        When using actions, you get the
-
-        actions
-
-        response field with debug information about action execution.
-
-
-        [See an example](/zyte-api/usage/browser.md).
-
-        '
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/click'
-        - $ref: '#/components/schemas/doubleClick'
-        - $ref: '#/components/schemas/evaluate'
-        - $ref: '#/components/schemas/goto'
-        - $ref: '#/components/schemas/hide'
-        - $ref: '#/components/schemas/hover'
-        - $ref: '#/components/schemas/interaction'
-        - $ref: '#/components/schemas/keyPress'
-        - $ref: '#/components/schemas/reload'
-        - $ref: '#/components/schemas/scrollBottom'
-        - $ref: '#/components/schemas/scrollTo'
-        - $ref: '#/components/schemas/searchKeyword'
-        - $ref: '#/components/schemas/select'
-        - $ref: '#/components/schemas/setLocation'
-        - $ref: '#/components/schemas/type'
-        - $ref: '#/components/schemas/waitForNavigation'
-        - $ref: '#/components/schemas/waitForRequest'
-        - $ref: '#/components/schemas/waitForResponse'
-        - $ref: '#/components/schemas/waitForSelector'
-        - $ref: '#/components/schemas/waitForTimeout'
     PostalAddress:
       description: Postal address to be set
       type: object
@@ -1941,575 +1014,77 @@ components:
         postalCode:
           description: The postal code.
           type: string
-    AdditionalProperty:
-      description: 'Additional propertiy or characteristics.
-
-
-        * name field contains the property name,
-
-        * value field contains the property value.
-
-
-        ![](https://docs.zyte.com/_static/images/schemas/product_info.png)
-
-        '
-      example:
-        name: batteries
-        value: 1 Lithium ion batteries required. (included)
+    NavigationRequest:
       type: object
       properties:
+        url:
+          description: URL of the item.
+          type: string
+          example: https://example.com/products/category/1
         name:
-          description: Property name.
+          description: The name or link text of the item.
           type: string
-        value:
-          description: Property value.
-          type: string
-      required:
-      - name
-    NetworkCaptureFilter:
-      type: object
-      description: 'Filter defined in the
-
-        networkCapture
-
-        request field that matched the captured response.
-
-        '
-      properties:
-        filterType:
+          example: In Her Wake
+        method:
+          description: HTTP method associated with the navigation request for product, subcategory
           type: string
           enum:
-          - url
-          - resourceType
-        httpResponseBody:
-          type: boolean
-          default: false
-          description: 'Set to `true` to get the body of the captured response in the
-
-            [networkCapture[].httpResponseBody](https://docs.zyte.com/zyte-api/usage/reference.html#operation/extract/response/200/networkCapture.httpResponseBody)
-
-            response field.
-
-            '
-      required:
-      - filterType
-      discriminator:
-        propertyName: filterType
-        mapping:
-          url: '#/components/schemas/UrlFilter'
-          resourceType: '#/components/schemas/ResourceTypeFilter'
-    ForumThread:
-      type: object
-      properties:
-        topic:
-          description: Topic that is discussed on the page.
-          type: object
-          properties:
-            name:
-              description: Name of the topic.
-              type: string
-              example: How do you cook rice?
-          required:
-          - name
-        posts:
-          description: List of posts available on this page, including the first or top post.
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+          - TRACE
+          - PATCH
+        headers:
+          description: List of headers associated with the request.
           type: array
           items:
             type: object
             properties:
-              text:
-                description: 'Text of the post.
-
-                  '
+              name:
                 type: string
-                example: Cooking rice is a hobby of mine. Here is how I cook it.
-              datePublished:
-                description: 'Publication date. ISO-formatted with ''T'' separator, may contain a timezone.
-
-                  '
+                description: Header name.
+              value:
                 type: string
-                example: '2019-06-19T00:00:00'
-              datePublishedRaw:
-                description: 'Same date as "datePublished", but before parsing/normalization, i.e. as
-
-                  it appears on the website.
-
-                  '
-                type: string
-                example: June 19, 2019
-              reactions:
-                description: Details of reactions to this post.
-                type: object
-                properties:
-                  likes:
-                    description: 'Number of up-votes or likes/stars received by the post.
-
-                      '
-                    type: integer
-                    minimum: 0
-                    example: 3
-                  replies:
-                    description: 'Number of replies received by the post.
-
-                      '
-                    type: integer
-                    minimum: 0
-                    example: 2
-              metadata:
-                $ref: '#/components/schemas/MetadataListItem'
-            required:
-            - metadata
-        url:
-          description: URL of a page where this forum post list was extracted.
-          type: string
-          example: https://example.com/forum/thread/1/
-        metadata:
-          $ref: '#/components/schemas/MetadataList'
-      required:
-      - url
-      - metadata
-    Name:
-      description: The name of the product.
-      type: string
-      example: Product name
-    OrganicResult:
-      type: object
-      properties:
-        description:
-          type: string
-          description: Result excerpt.
-          example: 'Squid is a caching proxy for the Web supporting HTTP, HTTPS, FTP, and more. It reduces bandwidth and improves response times by caching and reusing frequently- ...
-
-            '
-        name:
-          type: string
-          description: Result title.
-          example: squid-cache.org
-        url:
-          $ref: '#/components/schemas/OrganicResultURL'
-        rank:
-          type: integer
-          example: 1
-          description: 'Result position among organic results in the search page.
-
-
-            The first result of a search page is always 1, regardless of the
-
-            value of
-
-            serp.pageNumber.
-
-            '
-        displayedUrlText:
-          type: string
-          example: 1.4M+ followers
-          description: Extra information present in serp result
-    CapturedResponse:
-      type: object
-      properties:
-        interceptionStatus:
-          type: object
-          description: 'Exit status of the network capture.
-
-
-            If `interceptionStatus.status` is `error`, `httpResponseBody` is
-
-            not delivered.
-
-
-            Possible causes of error include all matching responses exceeding
-
-            the maximum total body size of 5 MiB.
-
-            '
-          properties:
-            status:
-              type: string
-              enum:
-              - success
-              - error
-            error:
-              type: string
-              description: 'Error message.
-
-
-                This field is only present if `interceptionStatus.status` is
-
-                `error`.
-
-                '
-        statusCode:
-          type: integer
-          description: HTTP status code of the captured response.
-        httpResponseBody:
+                description: Header value.
+        body:
+          description: Base64-encoded body of the request.
           type: string
           format: byte
-          description: '[Base64](https://en.wikipedia.org/wiki/Base64)-encoded body of the
-
-            captured response.
-
-
-            To get this response field, set the
-
-            [networkCapture[].httpResponseBody](https://docs.zyte.com/zyte-api/usage/reference.html#operation/extract/request/networkCapture.httpResponseBody)
-
-            request field to `true`.
-
-            '
-        url:
-          type: string
-          format: uri
-          description: Captured response URL.
-        headers:
-          type: object
-          description: Captured response headers.
-        filter:
-          $ref: '#/components/schemas/NetworkCaptureFilter'
-        request:
-          type: object
-          description: Captured request that got the captured response.
-          properties:
-            url:
-              type: string
-              description: URL of the captured request.
-            headers:
-              type: object
-              description: Headers of the captured request.
-            method:
-              type: string
-              description: HTTP method of the captured request.
-            body:
-              type: string
-              description: Body of the captured request, if any.
-    Currency:
-      description: 'The ISO 4217 standard of the currency in which the price is in.
-
-        '
-      type: string
-      pattern: ^[A-Z]{3}$
-      example: USD
-    NetworkCaptureFilterSequence:
-      type: array
-      maxItems: 10
-      description: 'Filters to capture browser network responses.
-
-
-        HTTP responses received during browser rendering (including
-
-        action
-
-        execution) will be returned in the
-
-        networkCapture
-
-        response field if they match any of the filters defined here.
-
-
-        You can capture up to 10 responses, provided the sum of their bodies
-
-        does not exceed 5 MiB. If they do exceed that limit, only the first
-
-        captured responses within the limit are returned.
-
-
-        [See an example](/zyte-api/usage/browser.md).
-
-        '
-      items:
-        $ref: '#/components/schemas/NetworkCaptureFilter'
-    SearchURL:
-      type: string
-      pattern: ^https?://[\S]+$
-      description: 'Search URL.
-
-
-        Should match
-
-        url.
-
-        '
-      example: https://search.example/search?q=squid+proxy
-      additionalProperties: false
-    PageContent:
-      type: object
-      properties:
-        breadcrumbs:
-          description: 'A list of breadcrumbs (a specific navigation element).
-
-            '
-          example:
-          - name: Home
-            url: https://example.com/
-          - name: Category
-            url: https://example.com/category
-          - name: Subcategory
-          type: array
-          items:
-            $ref: '#/components/schemas/Breadcrumb'
-        headline:
-          description: A page headline.
-          type: string
-          example: Example page headline
-        title:
-          description: A page title extracted from the `<title>` tag of the page.
-          type: string
-          example: Example page title
-        itemMain:
-          description: 'Text of the primary content of the page.
-
-
-            It does not include navigation elements (headers, footers,
-
-            sidebars or pagination links).
-
-            '
-          type: string
-          example: Example content snippet showing part of the page’s main text…
-        itemMainXPath:
-          description: 'XPath for `itemMain`.
-
-
-            It is an XPath 1.0 expression that points to the smallest HTML
-
-            element that contains all of `itemMain`.
-
-
-            The expression may only work with an HTML5-compliant parser.
-
-            '
-          type: string
-          example: //*[@id='homepage-container']/*[1]
-        navigationHeader:
-          description: 'Navigation items from the header.
-
-
-            They are typically for site-wide navigation, not page-specific.
-
-            '
-          type: array
-          items:
-            type: object
-            properties:
-              url:
-                description: URL.
-                type: string
-                example: https://example.com/category/
-              name:
-                description: Name.
-                type: string
-                example: Category name
-            required:
-            - url
-        navigationFooter:
-          description: 'Navigation items from the footer.
-
-
-            They are typically for site-wide navigation, not page-specific.
-
-            '
-          type: array
-          items:
-            type: object
-            properties:
-              url:
-                description: URL.
-                type: string
-                example: https://example.com/policy/
-              name:
-                description: Name.
-                type: string
-                example: Privacy Policy
-            required:
-            - url
-        navigationSidebar:
-          description: 'Navigation items from the sidebars.
-
-
-            They are typically for site-wide navigation, not page-specific.
-
-            '
-          type: array
-          items:
-            type: object
-            properties:
-              url:
-                description: URL.
-                type: string
-                example: https://example.com/sidebar-link/
-              name:
-                description: Name.
-                type: string
-                example: Sidebar link
-            required:
-            - url
-        pagination:
-          description: 'Pagination items.
-
-
-            Items to navigate content pages, either relative to the current
-
-            page (e.g. current, next, previous) or absolute (e.g. first, last,
-
-            specific page number).
-
-            '
-          type: array
-          items:
-            type: object
-            properties:
-              url:
-                description: URL.
-                type: string
-                example: https://example.com/?page=2
-              name:
-                description: Name.
-                type: string
-                example: Next
-            required:
-            - url
-        nextPage:
-          $ref: '#/components/schemas/PaginationNext'
-        url:
-          description: URL of the page.
-          type: string
-          example: https://example.com/example-page/
-        canonicalUrl:
-          description: Canonical URL of the page, if available.
-          type: string
-          example: https://example.com/canonical-url-page/
         metadata:
-          $ref: '#/components/schemas/Metadata__metadata'
+          $ref: '#/components/schemas/MetadataListItem'
       required:
       - url
       - metadata
-    MetadataListItem:
-      description: Item-level metadata for list data types.
+    CustomHttpRequestHeader:
       properties:
-        probability:
-          description: 'Probability that extracted item in a list is a valid item.
-
-            Items which are unlikely to be valid are not returned,
-
-            so normally no extra thresholding is needed for list items.
-
-            This probability is not calibrated.
-
-            '
-          type: number
-          minimum: 0.0
-          maximum: 1.0
-          example: 0.34
-      required:
-      - probability
-    PaginationNext:
-      description: A link to the next page in the list.
-      type: object
-      properties:
-        url:
-          description: URL of the next page in the list.
-          type: string
-          example: http://example.com/foo?p=3
         name:
-          description: Text of the link to the next page, if available.
           type: string
-          example: '3'
-      required:
-      - url
-    Size:
-      description: 'A standardized size of a product,
-
-        specified through a simple textual string (for example "XL", "32Wx34L").
-
-        A single product dimension (height, width) is not considered as the size.
+          maxLength: 200
+          example: X-APOLLO-OPERATION-NAME
+        value:
+          type: string
+          maxLength: 7000
+          example: nearByNodes
+    Viewport:
+      type: object
+      description: '[Browser viewport](https://developer.mozilla.org/en-US/docs/Glossary/Viewport).
 
         '
-      type: string
-      example: XL
-    Problem:
-      type: object
       properties:
-        type:
-          type: string
-          format: uri-reference
-          description: 'A URI reference that uniquely identifies the problem type, only in
-
-            the context of the provided API.
-
-
-            Opposed to the specification in RFC-7807, it is neither recommended
-
-            to be dereferenceable and point to human-readable documentation nor
-
-            globally unique for the problem type.
-
-            '
-          default: about:blank
-          example: /problem/connection-error
-        title:
-          type: string
-          description: 'A short summary of the problem type. Written in English and readable for engineers, usually not suited for non-technical stakeholders, and not localized.
-
-            '
-          example: Service Unavailable
-        status:
+        width:
           type: integer
-          format: int32
-          description: 'The HTTP status code generated by Zyte API for this occurrence of the problem.
-
-            '
-          minimum: 100
-          example: 503
-          exclusiveMaximum: 600
-        detail:
-          type: string
-          description: 'A human-readable explanation specific to this occurrence of the problem that is helpful to locate the source of the problem and gives advice on how to proceed.
-
-            Written in English and readable for engineers, usually not suited for non-technical stakeholders, and not localized.
-
-            '
-          example: Connection to database timed out
-    waitForRequest:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - waitForRequest
-            description: Wait until the request to a specific URL has been sent.
-          urlPattern:
-            $ref: '#/components/schemas/UrlPattern'
-          urlMatchingOptions:
-            $ref: '#/components/schemas/PatternMatchingOptions'
-          timeout:
-            $ref: '#/components/schemas/ActionTimeout'
-        example:
-        - urlPattern: https://example.org/store/api
-        - urlPattern: api/store
-          urlMatchingOptions: contains
-        - urlPattern: https://example.org/
-          urlMatchingOptions: startsWith
-        required:
-        - urlPattern
-        - action
-      - $ref: '#/components/schemas/Action'
-    InteractionLogEntry:
-      description: Interaction log entry
-      type: object
-      properties:
-        time:
-          description: The ISO 8601 format of the time
-          type: string
-        level:
-          description: The log level
-          type: string
-          enum:
-          - debug
-          - info
-          - warning
-          - error
-          - warn
-        message:
-          description: The log message
-          type: string
+          description: Viewport width, in pixels.
+          default: 1920
+          minimum: 320
+          maximum: 5120
+        height:
+          type: integer
+          description: Viewport height, in pixels.
+          default: 1080
+          minimum: 360
+          maximum: 4096
     Article:
       type: object
       properties:
@@ -2653,833 +1228,303 @@ components:
       required:
       - url
       - metadata
-    doubleClick:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - doubleClick
-            description: Double click on an element.
-          selector:
-            $ref: '#/components/schemas/ActionSelector'
-        required:
-        - selector
-        - action
-      - $ref: '#/components/schemas/Action'
-    Style:
-      description: 'Style of the product.
+    SessionContext:
+      description: 'User-defined name-value pairs to
 
-        It can also be referred as pattern/finish on the product page.
+        [request a server-managed session](/zyte-api/usage/features.md)
 
-        Example values: "Polka dots", "Striped",
+        initialized with
 
-        "Nickel finish with Translucent glass", etc.
-
-        '
-      type: string
-      example: Striped
-    CountryCode:
-      description: '[ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
-
-        code of a country from which the request should be sent, i.e. the
-
-        request
-
-        [geolocation](/zyte-api/usage/features.md).
+        sessionContextParameters).
 
 
-        If not specified, Zyte API will use a geolocation that, for the target
+        For every subsequent request with the same session context, Zyte API
 
-        website, does not cause bans or unexpected locale changes in the
+        will either reuse an available session created for the same session
 
-        response data, such as the wrong language, currency, date format, time
+        context or create a new session using
 
-        zone, etc.
-
-
-        If you believe Zyte API is using the wrong default geolocation for a
-
-        website, please
-
-        [reach out to our expert anti-ban team](https://support.zyte.com/support/tickets/new).
+        sessionContextParameters).
 
 
-        For some websites, however, you might want to set a custom geolocation.
+        Server-managed sessions expire after 4 hours or 3 ban responses. If you
 
-        For example, you may be interested in visiting the same URL from
+        are targeting websites that silently expire their sessions before the
 
-        different locations.
+        4-hour mark, i.e. they revert the effects of your
 
+        sessionContextParameters
 
-        Zyte API provides 2 sets of geolocations. Standard geolocations are
+        but requests continue working as expected otherwise, consider using
 
-        `AU`, `BE`, `BR`, `CA`, `CN`, `DE`, `ES`, `FR`, `GB`, `IN`, `IT`, `JP`,
+        [client-managed sessions](/zyte-api/usage/features.md)
 
-        `KR`, `MX`, `NL`, `PL`, `RU`, `TR`, `US`, and `ZA`. All other
-
-        geolocations are
-
-        [extended geolocations](/zyte-api/usage/features.md).
+        for higher session control.
 
 
         [See an example](/zyte-api/usage/features.md).
 
+        See also:
+
+        requestCookies,
+
+        responseCookies.
+
         '
-      example: US
-      type: string
-      enum:
-      - AW
-      - AF
-      - AO
-      - AI
-      - AX
-      - AL
-      - AD
-      - AE
-      - AR
-      - AM
-      - AS
-      - AQ
-      - TF
-      - AG
-      - AU
-      - AT
-      - AZ
-      - BI
-      - BE
-      - BJ
-      - BQ
-      - BF
-      - BD
-      - BG
-      - BH
-      - BS
-      - BA
-      - BL
-      - BY
-      - BZ
-      - BM
-      - BO
-      - BR
-      - BB
-      - BN
-      - BT
-      - BV
-      - BW
-      - CF
-      - CA
-      - CC
-      - CH
-      - CL
-      - CN
-      - CI
-      - CM
-      - CD
-      - CG
-      - CK
-      - CO
-      - KM
-      - CV
-      - CR
-      - CU
-      - CW
-      - CX
-      - KY
-      - CY
-      - CZ
-      - DE
-      - DJ
-      - DM
-      - DK
-      - DO
-      - DZ
-      - EC
-      - EG
-      - ER
-      - EH
-      - ES
-      - EE
-      - ET
-      - FI
-      - FJ
-      - FK
-      - FR
-      - FO
-      - FM
-      - GA
-      - GB
-      - GE
-      - GG
-      - GH
-      - GI
-      - GN
-      - GP
-      - GM
-      - GW
-      - GQ
-      - GR
-      - GD
-      - GL
-      - GT
-      - GF
-      - GU
-      - GY
-      - HK
-      - HM
-      - HN
-      - HR
-      - HT
-      - HU
-      - ID
-      - IM
-      - IN
-      - IO
-      - IE
-      - IR
-      - IQ
-      - IS
-      - IL
-      - IT
-      - JM
-      - JE
-      - JO
-      - JP
-      - KZ
-      - KE
-      - KG
-      - KH
-      - KI
-      - KN
-      - KR
-      - KW
-      - LA
-      - LB
-      - LR
-      - LY
-      - LC
-      - LI
-      - LK
-      - LS
-      - LT
-      - LU
-      - LV
-      - MO
-      - MF
-      - MA
-      - MC
-      - MD
-      - MG
-      - MV
-      - MX
-      - MH
-      - MK
-      - ML
-      - MT
-      - MM
-      - ME
-      - MN
-      - MP
-      - MZ
-      - MR
-      - MS
-      - MQ
-      - MU
-      - MW
-      - MY
-      - YT
-      - NA
-      - NC
-      - NE
-      - NF
-      - NG
-      - NI
-      - NU
-      - NL
-      - false
-      - NP
-      - NR
-      - NZ
-      - OM
-      - PK
-      - PA
-      - PN
-      - PE
-      - PH
-      - PW
-      - PG
-      - PL
-      - PR
-      - KP
-      - PT
-      - PY
-      - PS
-      - PF
-      - QA
-      - RE
-      - RO
-      - RU
-      - RW
-      - SA
-      - SD
-      - SN
-      - SG
-      - GS
-      - SH
-      - SJ
-      - SB
-      - SL
-      - SV
-      - SM
-      - SO
-      - PM
-      - RS
-      - SS
-      - ST
-      - SR
-      - SK
-      - SI
-      - SE
-      - SZ
-      - SX
-      - SC
-      - SY
-      - TC
-      - TD
-      - TG
-      - TH
-      - TJ
-      - TK
-      - TM
-      - TL
-      - TO
-      - TT
-      - TN
-      - TR
-      - TV
-      - TW
-      - TZ
-      - UG
-      - UA
-      - UM
-      - UY
-      - US
-      - UZ
-      - VA
-      - VC
-      - VE
-      - VG
-      - VI
-      - VN
-      - VU
-      - WF
-      - WS
-      - YE
-      - ZA
-      - ZM
-      - ZW
-    Response200:
-      required:
-      - url
-      properties:
-        url:
-          type: string
-          description: 'URL the data was extracted from.
-
-
-            Could be different from the input URL in case of
-
-            [redirection](/zyte-api/usage/http.md).
-
-
-            See also:
-
-            statusCode.
-
-            '
-          example: https://example.com/item-page/
-        statusCode:
-          type: integer
-          description: 'The HTTP status code retrieved from the target page.
-
-
-            If
-
-            [redirection is followed](/zyte-api/usage/http.md),
-
-            this is the status code of the response *after* redirection.
-
-
-            See also:
-
-            url.
-
-            '
-          example: 200
-        httpResponseBody:
-          description: '[Base64-encoded](https://en.wikipedia.org/wiki/Base64)
-
-            HTTP response body.
-
-
-            To get this response field, set the
-
-            httpResponseBody
-
-            request field to `true`.
-
-
-            Unlike
-
-            browserHtml,
-
-            this field supports binary response bodies, such as image files or
-
-            PDF files. This is the reason why this field is Base64-encoded,
-
-            JSON does not support binary data.
-
-
-            [See an example](/zyte-api/usage/http.md).
-
-            '
-          type: string
-          format: byte
-        httpResponseHeaders:
-          description: 'HTTP response headers.
-
-
-            To get this response field, set the
-
-            httpResponseHeaders
-
-            request field to `true`.
-
-
-            The `Content-Encoding` header value (e.g. `gzip`, `br`, etc.)
-
-            should not be used to decompress
-
-            httpResponseBody,
-
-            Zyte API already decompresses the body of compressed responses.
-
-
-            The `Set-Cookie` header value, when present, contains the header
-
-            value received from the main HTTP response. These cookies could
-
-            have changed later on, e.g. during browser rendering. Usually you
-
-            will want to ignore this header in favor of
-
-            responseCookies,
-
-            which provides the *final* cookies.
-
-
-            [See an example](/zyte-api/usage/features.md).
-
-            '
-          type: array
-          items:
-            $ref: '#/components/schemas/HTTPHeader'
-        browserHtml:
-          description: '[Browser HTML](/zyte-api/usage/browser.md).
-
-
-            To get this response field, set the
-
-            browserHtml
-
-            request field to `true`.
-
-
-            Browser HTML does not include the contents of
-
-            [iframes](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe)
-
-            or the
-
-            [shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM).
-
-
-            [See an example](/zyte-api/usage/browser.md).
-
-            '
-          type: string
-          example: <html>Downloaded data.</html>
-        session:
-          $ref: '#/components/schemas/Session'
-        screenshot:
-          description: '[Base64-encoded](https://en.wikipedia.org/wiki/Base64)
-
-            page screenshot file data.
-
-
-            To get this response field, set the
-
-            screenshot
-
-            request field to `true`.
-
-
-            screenshotOptions.format
-
-            determines the file format of the screenshot data.
-
-
-            [See an example](/zyte-api/usage/browser.md).
-
-            '
-          type: string
-          format: byte
-        article:
-          allOf:
-          - $ref: '#/components/schemas/Article'
-          - description: 'Article data.
-
-
-              To get this response field, set the
-
-              article
-
-              request field to `true`.
-
-              '
-        articleList:
-          allOf:
-          - $ref: '#/components/schemas/ArticleList'
-          - description: 'Article list data.
-
-
-              To get this response field, set the
-
-              articleList
-
-              request field to `true`.
-
-              '
-        articleNavigation:
-          allOf:
-          - $ref: '#/components/schemas/ArticleNavigation'
-          - description: 'Article navigation data.
-
-
-              To get this response field, set the
-
-              articleNavigation
-
-              request field to `true`.
-
-              '
-        forumThread:
-          allOf:
-          - $ref: '#/components/schemas/ForumThread'
-          - description: 'Forum thread data.
-
-
-              To get this response field, set the
-
-              forumThread
-
-              request field to `true`.
-
-              '
-        jobPosting:
-          allOf:
-          - $ref: '#/components/schemas/JobPosting'
-          - description: 'Job posting data.
-
-
-              To get this response field, set the
-
-              jobPosting
-
-              request field to `true`.
-
-              '
-        jobPostingNavigation:
-          allOf:
-          - $ref: '#/components/schemas/JobPostingNavigation'
-          - description: 'Job posting navigation data.
-
-
-              To get this response field, set the
-
-              jobPostingNavigation
-
-              request field to `true`.
-
-              '
-        pageContent:
-          allOf:
-          - $ref: '#/components/schemas/PageContent'
-          - description: 'Page content data.
-
-
-              To get this response field, set the
-
-              pageContent
-
-              request field to `true`.
-
-              '
-        product:
-          allOf:
-          - $ref: '#/components/schemas/Product'
-          - description: 'Product data.
-
-
-              To get this response field, set the
-
-              product
-
-              request field to `true`.
-
-              '
-        productList:
-          allOf:
-          - $ref: '#/components/schemas/ProductList'
-          - description: 'Product list data.
-
-
-              To get this response field, set the
-
-              productList
-
-              request field to `true`.
-
-              '
-        productNavigation:
-          allOf:
-          - $ref: '#/components/schemas/ProductNavigation'
-          - description: 'Product navigation data.
-
-
-              To get this response field, set the
-
-              productNavigation
-
-              request field to `true`.
-
-              '
-        customAttributes:
-          type: object
-          properties:
-            values:
-              type: object
-              additionalProperties: true
-              description: 'Values of extracted custom attributes, extracted according to the requested
-
-                customAttributes
-
-                schema.
-
-                '
-            metadata:
-              type: object
-              properties:
-                inputTokens:
-                  type: integer
-                  description: 'Total number of used input tokens, excluding our internal fixed prompt with the LLM instruction,
-
-                    when using the "generate" method.
-
-                    '
-                outputTokens:
-                  type: integer
-                  description: 'Total number of used output tokens, when using the "generate" method.
-
-                    '
-                textInputTokens:
-                  type: integer
-                  description: 'Total number of input tokens used for the text of the web page, excluding
-
-                    the schema and our internal fixed prompt with the LLM instruction,
-
-                    when using the "generate" method.
-
-                    Already included in the customAttributes.metadata.inputTokens
-
-                    field.
-
-                    '
-                textInputTokensBeforeTruncation:
-                  type: integer
-                  description: 'textInputTokens before the text was truncated to fit into the input limits,
-
-                    either set via
-
-                    customAttributesOptions.maxInputTokens
-
-                    or due to the model limitation returned in
-
-                    customAttributes.metadata.maxInputTokens,
-
-                    when using the "generate" method.
-
-                    '
-                maxInputTokens:
-                  type: integer
-                  description: 'Maximum number of allowed input tokens for the model, when using the "generate" method.
-
-                    '
-                excludedPIIAttributes:
-                  type: array
-                  items:
-                    type: string
-                  description: 'A list of all attributes dropped from the output due to a risk of PII
-
-                    (Personally Identifiable Information) extraction.
-
-                    '
-                error:
-                  type: string
-                  description: "* The ``extraction/unparsable-response`` error is given when the LLM response could not be parsed or recovered.\n  If this error happens, we suggest simplifying the task or reducing the number of attributes.\n* The ``extraction/schema-size-exceeded`` error is given when the schema did not fit into the input limits,\n  leaving no space for the input text, and therefore the LLM could not be used. If this error happens, we suggest\n  either making the schema smaller (fewer attributes and/or shorter descriptions),\n  or increasing\n  customAttributesOptions.maxInputTokens.\n"
-        echoData:
-          description: 'Arbitrary data set on the
-
-            echoData
-
-            request field.
-
-
-            [See an example](/zyte-api/usage/features.md).
-
-            '
-          type: object
-        jobId:
-          description: '[Scrapy Cloud](/scrapy-cloud/get-started.md)
-
-            job ID set on the
-
-            jobId
-
-            request field.
-
-
-            [See an example](/zyte-api/usage/features.md).
-
-            '
-          type: string
-          maxLength: 100
-          example: example-job-1
-        actions:
-          description: 'Debug information about the execution of the action sequence set in
-
-            the
-
-            actions
-
-            request field.
-
-
-            Action order in the response always matches that of the request.
-
-            '
-          type: array
-          items:
-            $ref: '#/components/schemas/ActionResult'
-        responseCookies:
-          description: 'List of cookies set during the request.
-
-
-            To get this response field, set the
-
-            responseCookies
-
-            request field to `true`.
-
-
-            [See an example](/zyte-api/usage/features.md).
-
-            See also:
-
-            requestCookies.
-
-            '
-          type: array
-          items:
-            $ref: '#/components/schemas/Cookie'
-        networkCapture:
-          type: array
-          description: 'Responses captured by filters specified in the
-
-            networkCapture
-
-            request parameter.
-
-            '
-          items:
-            $ref: '#/components/schemas/CapturedResponse'
-        serp:
-          $ref: '#/components/schemas/Serp'
-    interaction:
+      type: array
+      items:
+        type: object
+        maxItems: 10
+        properties:
+          name:
+            type: string
+            description: Name of the context identifier.
+            minLength: 1
+            maxLength: 30
+          value:
+            type: string
+            description: Value of the context identifier.
+            minLength: 1
+            maxLength: 100
+        required:
+        - name
+        - value
+    goto:
       allOf:
       - properties:
           action:
             enum:
-            - interaction
-            description: 'Execute a
+            - goto
+            description: 'Navigate to a new page.
 
-              [browser script](//zyte-api/ide/index.md).
+
+              This action waits until page load event is fired with a default timeout
+
+              of 30 seconds.
 
               '
-          id:
-            description: Script identifier
+          url:
+            description: URL to navigate page to. The url should include scheme
             type: string
-          args:
-            description: Input arguments
-            type: object
+          options:
+            $ref: '#/components/schemas/GoToOptions'
         required:
-        - id
+        - url
         - action
       - $ref: '#/components/schemas/Action'
-    ScreenshotOptions:
-      description: 'Options for the screenshot taken when the
-
-        screenshot
-
-        request field is `true`.
-
-        '
+    JobPosting:
       type: object
       properties:
-        format:
-          description: 'File format.
+        jobTitle:
+          description: The title of the job.
+          type: string
+          example: Regional Manager
+        datePublished:
+          description: 'Publication date of the job posting.
 
-
-            JPEG screenshots are taken with a quality of 75%.
+            ISO-formatted with ''T'' separator, may contain a timezone.
 
             '
           type: string
-          enum:
-          - png
-          - jpeg
-          default: jpeg
-        fullPage:
-          description: "When `true`, the screenshot features the full page. When\n`false`, it features only what is visible on the browser window\n(viewport).\n\nFull page screenshots:\n\n-   Are only available in JPEG format.\n\n-   Have a minimum resolution of 1920x1080, i.e. for pages\n    smaller than 1920x1080, the screenshot looks the same\n    regardless of the value of `fullPage`.\n\n-   Any image exceeding 5000 (width) x 10000 (height) pixels will be clipped to those\n    dimensions.\n"
-          type: boolean
-          default: false
-    PageNumber:
-      description: Integer describing the current page number. Starts at 1.
-      type: integer
-      example: 2
-    Breadcrumb:
-      description: 'Breadcrumb item (a specific navigation element) with optional `name` and `url`.
+          example: '2019-06-19T00:00:00'
+        datePublishedRaw:
+          description: 'Same date as ''datePublished'', but before parsing/normalization,
+
+            i.e. as it appears on the website.
+
+            '
+          type: string
+          example: 19 June 2019
+        validThrough:
+          description: 'The date after which the job posting is not valid,
+
+            e.g. the end of an offer.
+
+            ISO-formatted with ‘T’ separator, may contain a timezone.
+
+            '
+          type: string
+          example: '2019-08-20T00:00:00'
+        description:
+          description: 'A description of the job posting including sub-headings,
+
+            with newline separators.
+
+            '
+          type: string
+          example: Job Description ...
+        descriptionHtml:
+          description: 'Simplified HTML of the description, including sub-headings,
+
+            image captions and embedded content.
+
+            '
+          type: string
+          example: <article>HTML for Job Description ...
+        employmentType:
+          description: 'Type of employment
+
+            (e.g. full-time, part-time, contract, temporary, seasonal, internship).
+
+            '
+          type: string
+          example: Full-time
+        hiringOrganization:
+          description: Information about the organization offering the job position.
+          type: object
+          properties:
+            name:
+              description: Name of the organization.
+              type: string
+              example: ACME Corp.
+          required:
+          - name
+        baseSalary:
+          description: 'The base salary of the job or of an employee in the proposed role.
+
+            '
+          type: object
+          properties:
+            raw:
+              description: Salary amount as it appears on the website.
+              example: $53,251 a year
+              type: string
+            valueMax:
+              description: 'The maximum value of the base salary as a number string.
+
+                In case of only one value given for the salary instead of a range, valueMax is used to represent it.
+
+                '
+              example: '53251.0'
+              type: string
+            currency:
+              description: 'Currency associated with the salary amount.
+
+                ISO 4217 standard.
+
+                '
+              type: string
+              example: USD
+            currencyRaw:
+              description: Currency associated with the salary amount, without normalization.
+              type: string
+              example: $
+        jobLocation:
+          description: 'A (typically single) geographic location associated with the job position.
+
+            '
+          type: object
+          properties:
+            raw:
+              description: Job location as it appears on the website.
+              type: string
+              example: West New York, NJ 07093
+          required:
+          - raw
+        url:
+          description: URL of a page where this job posting was extracted.
+          type: string
+          example: https://example.com/job
+        metadata:
+          $ref: '#/components/schemas/Metadata__metadata'
+      required:
+      - url
+      - metadata
+    SessionContextActionSequence:
+      description: 'Actions to run to initialize a server-managed session for a given
+
+        sessionContext).
 
         '
-      example:
-        name: Home
-        url: https://example.com/
-      type: object
-      properties:
-        name:
-          description: Text of the breadcrumb, as it appears on the website.
-          type: string
-        url:
-          description: Absolute URL of the breadcrumb.
-          type: string
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/click'
+        - $ref: '#/components/schemas/doubleClick'
+        - $ref: '#/components/schemas/evaluate'
+        - $ref: '#/components/schemas/goto'
+        - $ref: '#/components/schemas/hide'
+        - $ref: '#/components/schemas/hover'
+        - $ref: '#/components/schemas/interaction'
+        - $ref: '#/components/schemas/keyPress'
+        - $ref: '#/components/schemas/reload'
+        - $ref: '#/components/schemas/scrollBottom'
+        - $ref: '#/components/schemas/scrollTo'
+        - $ref: '#/components/schemas/searchKeyword'
+        - $ref: '#/components/schemas/select'
+        - $ref: '#/components/schemas/setLocation'
+        - $ref: '#/components/schemas/type'
+        - $ref: '#/components/schemas/waitForNavigation'
+        - $ref: '#/components/schemas/waitForRequest'
+        - $ref: '#/components/schemas/waitForResponse'
+        - $ref: '#/components/schemas/waitForSelector'
+        - $ref: '#/components/schemas/waitForTimeout'
+    CanonicalUrl:
+      description: Canonical URL of the product, if available.
+      type: string
+      example: https://example.com/product/
+    Currency:
+      description: 'The ISO 4217 standard of the currency in which the price is in.
+
+        '
+      type: string
+      pattern: ^[A-Z]{3}$
+      example: USD
+    scrollBottom:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - scrollBottom
+            description: "Continuously scroll down the page while it keeps loading more content.\n\nThe action halts if any of the following conditions are met:\n\n  - the timeout or the total browser execution time is reached\n  - the page does not load any new content for the duration of\n    maxScrollDelay\n  - maxPageHeight or maxScrollCount have been reached\n"
+          timeout:
+            description: Maximum wait time, in seconds.
+            type: number
+            minimum: 0.0
+            default: 15.0
+            maximum: 30.0
+          maxScrollDelay:
+            description: 'The maximum amount of time to wait for each scroll to complete,
+
+              in seconds.
+
+
+              If the page does not not load any content during this time, the
+
+              action is deemed to have been completed.
+
+              '
+            type: number
+            default: 5
+            minimum: 0.5
+            maximum: 10
+          maxPageHeight:
+            description: Maximum height (in pixels) until which the browser keeps scrolling down the page
+            type: integer
+          maxScrollCount:
+            description: 'The maximum number of scrolls to perform.
+
+
+              If the page does not yield any fresh content, then the action
+
+              will finish execution before maxScrollCount is reached.
+
+              '
+            type: integer
+          scrollStep:
+            description: 'The number of pixels for each scroll.
+
+              It can be used for gradual scrolling.
+
+              If it''s specified, maxScrollDelay will be used as fixed time waiting instead of waiting for new contents.
+
+              '
+            type: integer
+            default: 0
+            minimum: 0
+        required:
+        - action
+      - $ref: '#/components/schemas/Action'
     Cookie:
       type: object
       properties:
@@ -3518,35 +1563,569 @@ components:
       - name
       - value
       - domain
-    ProductNavigation:
+    Color:
+      description: Color of the product.
+      type: string
+      example: Red
+    GoToOptions:
+      description: Used to customise navigation options
       type: object
       properties:
-        categoryName:
-          description: Name of the category in which the listed products are found.
+        waitUntil:
+          description: 'When to consider navigation succeeded, defaults to load. Events can be either:
+
+            * load - consider navigation to be finished when the load event is fired.
+
+            * networkidle0 -  consider navigation to be finished when there are no more than 0 network connections for at least 500 ms
+
+            * domcontentloaded - consider navigation to be finished when the DOMContentLoaded event is fired.
+
+            '
           type: string
-          example: Sports & Outdoors
+          enum:
+          - load
+          - networkidle0
+          - domcontentloaded
+          default: load
+        timeout:
+          description: Maximum navigation time in seconds, defaults to 30 seconds. Pass 0 to disable timeout.
+          type: integer
+          default: 30
+          minimum: 0
+    UrlPattern:
+      description: 'A string to compare with a URL according to `urlMatchingOptions`.
+
+        '
+      type: string
+      example:
+      - https://example.com/api
+      - /api/store/fulfilment
+    waitForTimeout:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - waitForTimeout
+            description: 'Pause script execution for the given number of seconds before
+
+              continuing.
+
+
+              If the value of timeout is greater than the remaining browser
+
+              execution time, then this action ends with an error.
+
+              '
+          timeout:
+            $ref: '#/components/schemas/ActionTimeout'
+        required:
+        - action
+      - $ref: '#/components/schemas/Action'
+    ExtractionOptions:
+      description: 'Options for automatic extraction.
+
+        '
+      type: object
+      properties:
+        extractFrom:
+          allOf:
+          - $ref: '#/components/schemas/ExtractFrom'
+          description: 'extractFrom
+
+            override for this particular extraction type.
+
+
+            Using
+
+            extractFrom
+
+            instead is recommended.
+
+            '
+        userHtml:
+          type: string
+          description: 'HTML content provided by the user for extraction.
+
+            Required when extractFrom is set to `"userHtml"`.
+
+            '
+          minLength: 1
+          maxLength: 2621440
+    JobPostingNavigation:
+      type: object
+      properties:
         nextPage:
           $ref: '#/components/schemas/PaginationNext'
         pageNumber:
           $ref: '#/components/schemas/PageNumber'
         items:
-          description: List of products available on this page.
+          description: List of job postings available on this page.
           type: array
           items:
-            $ref: '#/components/schemas/NavigationRequest'
-        subCategories:
-          description: List of subcategory links found on this page.
-          type: array
-          items:
-            $ref: '#/components/schemas/NavigationRequest'
+            type: object
+            properties:
+              url:
+                description: 'URL of a detailed job posting page.
+
+                  Pass this URL with "jobPosting: true" in the request to
+
+                  extract detailed information about the job posting.
+
+                  '
+                type: string
+                example: https://example.com/jobs/1/
+              name:
+                description: The name of the job posting or job posting link text.
+                type: string
+                example: Job posting name
+              metadata:
+                $ref: '#/components/schemas/MetadataListItem'
+            required:
+            - metadata
+            - url
         url:
-          description: URL of the page.
+          description: URL a of page.
           type: string
+          example: https://example.com/jobs/
         metadata:
           $ref: '#/components/schemas/MetadataList'
+      required:
+      - url
+      - metadata
+    Availability:
+      description: "Availability, as a string. Allowed values:\n\n  * `\"InStock\"` - includes limited availability, presale,\n    preorder, and in-store only.\n  * `\"OutOfStock\"` - includes discontinued and sold out.\n"
+      example: InStock
+      type: string
+      enum:
+      - InStock
+      - OutOfStock
+    PatternMatchingOptions:
+      description: "How to compare a user-defined string with a target string:\n\n- `contains` matches if the user-defined string is a substring of the\n  target string.\n\n- `exact` matches if the user-defined string is an exact match of the\n  target string.\n\n- `startsWith` matches if the target string starts with the\n  user-defined string.\n\n- `endsWith` matches if the target string ends with the user-defined\n  string.\n\nComparisons are case-sensitive. Regular expressions or wildcard\ncharacters are not supported.\n"
+      type: string
+      enum:
+      - startsWith
+      - endsWith
+      - contains
+      - exact
+      default: contains
+    onError:
+      description: 'Handle errors encountered while executing a particular action.
+
+        * continue - When a particular action fails, the action sequence continues, executing the next actions
+
+        * return - When a particular actions fails, the action sequence stops, not executing any more actions
+
+
+        When an action sequence finishes prematurely the service will return the entire response body up until the
+
+        point of execution.
+
+        '
+      type: string
+      enum:
+      - continue
+      - return
+      default: return
+    Metadata:
+      type: object
+      description: Metadata.
+      properties:
+        displayedQuery:
+          type: string
+          description: Search query as seen in the webpage.
+          example: squid proxy
+        searchedQuery:
+          type: string
+          description: Search query as specified in the input URL.
+          example: squid proxy
+        totalOrganicResults:
+          type: integer
+          format: int64
+          description: 'Total number of organic results reported by the search engine.
+
+            '
+          minimum: 0
+          example: 10000
+        dateDownloaded:
+          type: string
+          description: 'The timestamp at which the data was downloaded. Timezone: UTC.
+
+            Format: ISO 8601 format: "YYYY-MM-DDThh:mm:ssZ"
+
+            '
+          example: '2024-02-29T13:01:54Z'
+    ScreenshotOptions:
+      description: 'Options for the screenshot taken when the
+
+        screenshot
+
+        request field is `true`.
+
+        '
+      type: object
+      properties:
+        format:
+          description: 'File format.
+
+
+            JPEG screenshots are taken with a quality of 75%.
+
+            '
+          type: string
+          enum:
+          - png
+          - jpeg
+          default: jpeg
+        fullPage:
+          description: "When `true`, the screenshot features the full page. When\n`false`, it features only what is visible on the browser window\n(viewport).\n\nFull page screenshots:\n\n-   Are only available in JPEG format.\n\n-   Have a minimum resolution of 1920x1080, i.e. for pages\n    smaller than 1920x1080, the screenshot looks the same\n    regardless of the value of `fullPage`.\n\n-   Any image exceeding 5000 (width) x 10000 (height) pixels will be clipped to those\n    dimensions.\n"
+          type: boolean
+          default: false
+    ArticleNavigation:
+      type: object
+      properties:
+        nextPage:
+          $ref: '#/components/schemas/PaginationNext'
+        pageNumber:
+          $ref: '#/components/schemas/PageNumber'
+        items:
+          description: List of articles available on this page.
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                description: 'URL of a detailed article page.
+
+                  Pass this URL with "article: true" in the request to
+
+                  extract detailed information about the article.
+
+                  '
+                type: string
+                example: https://example.com/articles/1/
+              name:
+                description: The name of the article or article link text.
+                type: string
+                example: Article name
+              datePublished:
+                description: 'Publication date. ISO-formatted with ''T'' separator, may contain a timezone.
+
+                  '
+                type: string
+                example: '2019-06-19T00:00:00'
+              datePublishedRaw:
+                description: 'Same date as "datePublished", but before parsing/normalization, i.e. as
+
+                  it appears on the website.
+
+                  '
+                type: string
+                example: June 19, 2019
+              metadata:
+                $ref: '#/components/schemas/MetadataListItem'
+            required:
+            - url
+            - metadata
+        url:
+          description: URL of a page containing the list of articles.
+          type: string
+          example: https://example.com/articles/
+        metadata:
+          $ref: '#/components/schemas/MetadataList'
+      required:
+      - url
+      - metadata
+    Name:
+      description: The name of the product.
+      type: string
+      example: Product name
+    select:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - select
+            description: 'Pick single or multiple values from a `<select>` element.
+
+              '
+          selector:
+            $ref: '#/components/schemas/ActionSelector'
+          values:
+            description: 'Values of options to select.
+
+
+              If the `<select>` has the multiple attribute, all values are
+
+              considered, otherwise only the first one is taken into account.
+
+              '
+            type: array
+            items:
+              type: string
         required:
-        - url
-        - metadata
+        - selector
+        - values
+        - action
+      - $ref: '#/components/schemas/Action'
+    reload:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - reload
+            description: 'Reload the page.
+
+
+              This action waits until page load event is fired with a default timeout
+
+              of 30 seconds.
+
+              '
+          options:
+            $ref: '#/components/schemas/GoToOptions'
+        required:
+        - action
+      - $ref: '#/components/schemas/Action'
+    ForumThread:
+      type: object
+      properties:
+        topic:
+          description: Topic that is discussed on the page.
+          type: object
+          properties:
+            name:
+              description: Name of the topic.
+              type: string
+              example: How do you cook rice?
+          required:
+          - name
+        posts:
+          description: List of posts available on this page, including the first or top post.
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                description: 'Text of the post.
+
+                  '
+                type: string
+                example: Cooking rice is a hobby of mine. Here is how I cook it.
+              datePublished:
+                description: 'Publication date. ISO-formatted with ''T'' separator, may contain a timezone.
+
+                  '
+                type: string
+                example: '2019-06-19T00:00:00'
+              datePublishedRaw:
+                description: 'Same date as "datePublished", but before parsing/normalization, i.e. as
+
+                  it appears on the website.
+
+                  '
+                type: string
+                example: June 19, 2019
+              reactions:
+                description: Details of reactions to this post.
+                type: object
+                properties:
+                  likes:
+                    description: 'Number of up-votes or likes/stars received by the post.
+
+                      '
+                    type: integer
+                    minimum: 0
+                    example: 3
+                  replies:
+                    description: 'Number of replies received by the post.
+
+                      '
+                    type: integer
+                    minimum: 0
+                    example: 2
+              metadata:
+                $ref: '#/components/schemas/MetadataListItem'
+            required:
+            - metadata
+        url:
+          description: URL of a page where this forum post list was extracted.
+          type: string
+          example: https://example.com/forum/thread/1/
+        metadata:
+          $ref: '#/components/schemas/MetadataList'
+      required:
+      - url
+      - metadata
+    ForbiddenDomainProblem:
+      allOf:
+      - $ref: '#/components/schemas/Problem'
+      properties:
+        blockedDomain:
+          type: string
+          description: 'The domain which extraction cannot be performed.
+
+            '
+          example: forbiddendomain.com
+    RequestHeaders:
+      description: 'HTTP request headers.
+
+
+        Can only be used in a
+
+        [browser request](/zyte-api/usage/browser.md).
+
+        For
+
+        [HTTP requests](/zyte-api/usage/http.md), see
+
+        customHttpRequestHeaders.
+
+
+        At the moment it only supports the
+
+        [Referer header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referer).
+
+
+        [See an example](/zyte-api/usage/browser.md).
+
+        '
+      properties:
+        referer:
+          description: '[Referer header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referer).
+
+            '
+          type: string
+          example: https://search.example/
+    SessionContextParameters:
+      description: 'Parameters to create a server-managed session for a given
+
+        sessionContext).
+
+
+        [See an example](/zyte-api/usage/features.md).
+
+        See also:
+
+        actions.
+
+        '
+      type: object
+      properties:
+        actions:
+          $ref: '#/components/schemas/SessionContextActionSequence'
+    ActionTimeout:
+      description: Maximum wait time in seconds.
+      type: number
+      minimum: 0.0
+      default: 5.0
+      maximum: 15.0
+    DateDownloaded:
+      description: 'The timestamp at which the data was downloaded.
+
+        Timezone: UTC. Format: ISO 8601 format: "YYYY-MM-DDThh:mm:ssZ"
+
+        '
+      type: string
+      example: '2019-06-19T08:27:43Z'
+    ExtractFrom:
+      type: string
+      enum:
+      - httpResponseBody
+      - browserHtml
+      - userHtml
+      description: '[Extraction source](/zyte-api/usage/extract/index.md).
+
+
+        `httpResponseBody` extracts from
+
+        httpResponseBody.
+
+        It is usually faster and cheaper.
+
+
+        `browserHtml` extracts from both
+
+        browserHtml
+
+        and
+
+        screenshot.
+
+        It typically improves quality over `httpResponseBody`, but is not as
+
+        robust in case of rendering issues.
+
+
+        `userHtml` extracts from user-provided HTML content. When this
+
+        option is set, the
+
+        userHtml
+
+        field must contain the HTML to extract from. No download request
+
+        is performed and no browser rendering takes place. The
+
+        url
+
+        field is still required.
+
+
+        If not specified, `browserHtml` is currently used by default for
+
+        [AI extraction](/zyte-api/usage/extract/index.md),
+
+        while `httpResponseBody` is used by default for
+
+        [non-AI extraction](/zyte-api/usage/extract/index.md).
+
+        In the future, the default value may depend on the target website.
+
+
+        This field does not work with
+
+        serp;
+
+        for `serp`, use
+
+        serpOptions.extractFrom
+
+        instead.
+
+        '
+    Metadata__metadata:
+      description: Extracted item metadata for single-item data types.
+      type: object
+      properties:
+        probability:
+          description: 'Probability that extracted item is of requested data type.
+
+            It is closer to 0 in case this page does not contain requested data type.
+
+            For example, when single product extraction is requested with
+
+            "product: true", but a page does not contain a product,
+
+            probability would be close to 0.
+
+            If an item of requested type can be extracted from a page,
+
+            then probability is closer to 1.
+
+            Recommended probability threshold is 0.5,
+
+            but we will return extracted data even if probability is very low.
+
+            '
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.87
+        dateDownloaded:
+          $ref: '#/components/schemas/DateDownloaded'
+      required:
+      - probability
+      - dateDownloaded
     ExtractRequest:
       type: object
       required:
@@ -4906,205 +3485,19 @@ components:
             '
           default: false
       additionalProperties: false
-    RegularPrice:
-      description: 'The price before any discount or special offer.
+    SearchURL:
+      type: string
+      pattern: ^https?://[\S]+$
+      description: 'Search URL.
+
+
+        Should match
+
+        url.
 
         '
-      type: string
-      pattern: ^[0-9]+(\.[0-9]+)?$
-      example: '199.00'
-    Serp:
-      type: object
-      properties:
-        organicResults:
-          type: array
-          items:
-            $ref: '#/components/schemas/OrganicResult'
-        url:
-          $ref: '#/components/schemas/SearchURL'
-        pageNumber:
-          type: integer
-          description: Current page number
-          minimum: 1
-        metadata:
-          $ref: '#/components/schemas/Metadata'
-    ActionSelector:
-      description: 'A CSS or XPath selector to search for an element.
-
-        '
-      properties:
-        type:
-          description: The type of selector - CSS or XPath
-          type: string
-          enum:
-          - css
-          - xpath
-        value:
-          type: string
-          minLength: 1
-          maxLength: 500
-        state:
-          description: 'State can be either of the following values and defaults to visible
-
-            * ''visible'' - The element has a non-empty bounding box and no visibility:hidden. Note that an element without content or with display:none has an empty bounding box, and is not considered visible.
-
-            * ''hidden'' - The element is either detached from the DOM, or has an empty bounding box or visibility:hidden.
-
-            This is the opposite of the ''visible'' option.
-
-            * ''attached'' - The element is present in the DOM; it can be visible or hidden
-
-            '
-          type: string
-          enum:
-          - attached
-          - visible
-          - hidden
-          default: visible
-      required:
-      - type
-      - value
-    JobPostingNavigation:
-      type: object
-      properties:
-        nextPage:
-          $ref: '#/components/schemas/PaginationNext'
-        pageNumber:
-          $ref: '#/components/schemas/PageNumber'
-        items:
-          description: List of job postings available on this page.
-          type: array
-          items:
-            type: object
-            properties:
-              url:
-                description: 'URL of a detailed job posting page.
-
-                  Pass this URL with "jobPosting: true" in the request to
-
-                  extract detailed information about the job posting.
-
-                  '
-                type: string
-                example: https://example.com/jobs/1/
-              name:
-                description: The name of the job posting or job posting link text.
-                type: string
-                example: Job posting name
-              metadata:
-                $ref: '#/components/schemas/MetadataListItem'
-            required:
-            - metadata
-            - url
-        url:
-          description: URL a of page.
-          type: string
-          example: https://example.com/jobs/
-        metadata:
-          $ref: '#/components/schemas/MetadataList'
-      required:
-      - url
-      - metadata
-    evaluate:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - evaluate
-            description: "Run JavaScript code in the page context.\n\nThis is a very powerful action. Use cases include:\n\n-   Sending an API request from the page context, and writing\n    the response somewhere in the DOM, so that the\n    [browser HTML](/zyte-api/usage/browser.md)\n    output includes it.\n"
-          source:
-            description: JavaScript code to run.
-            type: string
-            maxLength: 6000
-        required:
-        - source
-        - action
-      - $ref: '#/components/schemas/Action'
-    ProductList:
-      type: object
-      properties:
-        breadcrumbs:
-          description: 'A list of breadcrumbs (a specific navigation element)
-
-            with optional `name` and `url`.
-
-            '
-          example:
-          - name: Home
-            url: https://example.com/
-          - name: Cell Phones
-            url: https://example.com/cell-phones
-          - name: Cell Phones & Accessories
-          type: array
-          items:
-            $ref: '#/components/schemas/Breadcrumb'
-        products:
-          description: List of products available on this page.
-          type: array
-          items:
-            type: object
-            properties:
-              url:
-                description: 'URL of a detailed product page.
-
-                  Pass this URL with "product: true" in the request to
-
-                  extract detailed information about the product.
-
-                  '
-                type: string
-                example: https://example.com/products/1/
-              name:
-                description: The name of the product.
-                type: string
-                example: Product name
-              price:
-                $ref: '#/components/schemas/Price'
-              currencyRaw:
-                $ref: '#/components/schemas/CurrencyRaw'
-              currency:
-                $ref: '#/components/schemas/Currency'
-              regularPrice:
-                $ref: '#/components/schemas/RegularPrice'
-              mainImage:
-                $ref: '#/components/schemas/Image'
-                description: The main image of the item.
-              metadata:
-                $ref: '#/components/schemas/MetadataListItem'
-            required:
-            - metadata
-        url:
-          description: URL of a page where this product list was extracted.
-          type: string
-          example: https://example.com/products/
-        metadata:
-          $ref: '#/components/schemas/MetadataList'
-        categoryName:
-          description: Name of the category in which the listed products are.
-          type: string
-          example: Sports & Outdoors
-      required:
-      - url
-      - metadata
-    Image:
-      description: Image.
-      type: object
-      properties:
-        url:
-          description: URL of an image.
-          type: string
-          example: http://example.com/item-1/image1.jpeg
-      required:
-      - url
-    PatternMatchingOptions:
-      description: "How to compare a user-defined string with a target string:\n\n- `contains` matches if the user-defined string is a substring of the\n  target string.\n\n- `exact` matches if the user-defined string is an exact match of the\n  target string.\n\n- `startsWith` matches if the target string starts with the\n  user-defined string.\n\n- `endsWith` matches if the target string ends with the user-defined\n  string.\n\nComparisons are case-sensitive. Regular expressions or wildcard\ncharacters are not supported.\n"
-      type: string
-      enum:
-      - startsWith
-      - endsWith
-      - contains
-      - exact
-      default: contains
+      example: https://search.example/search?q=squid+proxy
+      additionalProperties: false
     searchKeyword:
       allOf:
       - properties:
@@ -5134,6 +3527,1605 @@ components:
         - keyword
         - action
       - $ref: '#/components/schemas/Action'
+    CountryCode:
+      description: '[ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
+
+        code of a country from which the request should be sent, i.e. the
+
+        request
+
+        [geolocation](/zyte-api/usage/features.md).
+
+
+        If not specified, Zyte API will use a geolocation that, for the target
+
+        website, does not cause bans or unexpected locale changes in the
+
+        response data, such as the wrong language, currency, date format, time
+
+        zone, etc.
+
+
+        If you believe Zyte API is using the wrong default geolocation for a
+
+        website, please
+
+        [reach out to our expert anti-ban team](https://support.zyte.com/support/tickets/new).
+
+
+        For some websites, however, you might want to set a custom geolocation.
+
+        For example, you may be interested in visiting the same URL from
+
+        different locations.
+
+
+        Zyte API provides 2 sets of geolocations. Standard geolocations are
+
+        `AU`, `BE`, `BR`, `CA`, `CN`, `DE`, `ES`, `FR`, `GB`, `IN`, `IT`, `JP`,
+
+        `KR`, `MX`, `NL`, `PL`, `RU`, `TR`, `US`, and `ZA`. All other
+
+        geolocations are
+
+        [extended geolocations](/zyte-api/usage/features.md).
+
+
+        [See an example](/zyte-api/usage/features.md).
+
+        '
+      example: US
+      type: string
+      enum:
+      - AW
+      - AF
+      - AO
+      - AI
+      - AX
+      - AL
+      - AD
+      - AE
+      - AR
+      - AM
+      - AS
+      - AQ
+      - TF
+      - AG
+      - AU
+      - AT
+      - AZ
+      - BI
+      - BE
+      - BJ
+      - BQ
+      - BF
+      - BD
+      - BG
+      - BH
+      - BS
+      - BA
+      - BL
+      - BY
+      - BZ
+      - BM
+      - BO
+      - BR
+      - BB
+      - BN
+      - BT
+      - BV
+      - BW
+      - CF
+      - CA
+      - CC
+      - CH
+      - CL
+      - CN
+      - CI
+      - CM
+      - CD
+      - CG
+      - CK
+      - CO
+      - KM
+      - CV
+      - CR
+      - CU
+      - CW
+      - CX
+      - KY
+      - CY
+      - CZ
+      - DE
+      - DJ
+      - DM
+      - DK
+      - DO
+      - DZ
+      - EC
+      - EG
+      - ER
+      - EH
+      - ES
+      - EE
+      - ET
+      - FI
+      - FJ
+      - FK
+      - FR
+      - FO
+      - FM
+      - GA
+      - GB
+      - GE
+      - GG
+      - GH
+      - GI
+      - GN
+      - GP
+      - GM
+      - GW
+      - GQ
+      - GR
+      - GD
+      - GL
+      - GT
+      - GF
+      - GU
+      - GY
+      - HK
+      - HM
+      - HN
+      - HR
+      - HT
+      - HU
+      - ID
+      - IM
+      - IN
+      - IO
+      - IE
+      - IR
+      - IQ
+      - IS
+      - IL
+      - IT
+      - JM
+      - JE
+      - JO
+      - JP
+      - KZ
+      - KE
+      - KG
+      - KH
+      - KI
+      - KN
+      - KR
+      - KW
+      - LA
+      - LB
+      - LR
+      - LY
+      - LC
+      - LI
+      - LK
+      - LS
+      - LT
+      - LU
+      - LV
+      - MO
+      - MF
+      - MA
+      - MC
+      - MD
+      - MG
+      - MV
+      - MX
+      - MH
+      - MK
+      - ML
+      - MT
+      - MM
+      - ME
+      - MN
+      - MP
+      - MZ
+      - MR
+      - MS
+      - MQ
+      - MU
+      - MW
+      - MY
+      - YT
+      - NA
+      - NC
+      - NE
+      - NF
+      - NG
+      - NI
+      - NU
+      - NL
+      - false
+      - NP
+      - NR
+      - NZ
+      - OM
+      - PK
+      - PA
+      - PN
+      - PE
+      - PH
+      - PW
+      - PG
+      - PL
+      - PR
+      - KP
+      - PT
+      - PY
+      - PS
+      - PF
+      - QA
+      - RE
+      - RO
+      - RU
+      - RW
+      - SA
+      - SD
+      - SN
+      - SG
+      - GS
+      - SH
+      - SJ
+      - SB
+      - SL
+      - SV
+      - SM
+      - SO
+      - PM
+      - RS
+      - SS
+      - ST
+      - SR
+      - SK
+      - SI
+      - SE
+      - SZ
+      - SX
+      - SC
+      - SY
+      - TC
+      - TD
+      - TG
+      - TH
+      - TJ
+      - TK
+      - TM
+      - TL
+      - TO
+      - TT
+      - TN
+      - TR
+      - TV
+      - TW
+      - TZ
+      - UG
+      - UA
+      - UM
+      - UY
+      - US
+      - UZ
+      - VA
+      - VC
+      - VE
+      - VG
+      - VI
+      - VN
+      - VU
+      - WF
+      - WS
+      - YE
+      - ZA
+      - ZM
+      - ZW
+    setLocation:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - setLocation
+            description: 'Configure a physical address on the website.
+
+
+              This action uses website-specific knowledge to find and fill a location
+
+              form.
+
+
+              It may not work on some websites. If that’s the case, please
+
+              [reach out to us](https://support.zyte.com/support/tickets/new).
+
+              '
+          address:
+            $ref: '#/components/schemas/PostalAddress'
+        required:
+        - action
+      - $ref: '#/components/schemas/Action'
+    CurrencyRaw:
+      description: 'The currency as given on the website, without extra normalization (for example, both "$" and "USD" are possible currencies).
+
+        '
+      type: string
+      example: $
+    Serp:
+      type: object
+      properties:
+        organicResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganicResult'
+        url:
+          $ref: '#/components/schemas/SearchURL'
+        pageNumber:
+          type: integer
+          description: Current page number
+          minimum: 1
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+    type:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - type
+            description: Type text into an element.
+          selector:
+            $ref: '#/components/schemas/ActionSelector'
+          text:
+            description: 'Text to type into a focused element.
+
+
+              To press a special key, use the `keyPress` action instead.
+
+              '
+            type: string
+          delay:
+            description: Time to wait between key presses, in seconds.
+            type: number
+            minimum: 0
+            default: 0
+        required:
+        - selector
+        - text
+        - action
+      - $ref: '#/components/schemas/Action'
+    waitForRequest:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - waitForRequest
+            description: Wait until the request to a specific URL has been sent.
+          urlPattern:
+            $ref: '#/components/schemas/UrlPattern'
+          urlMatchingOptions:
+            $ref: '#/components/schemas/PatternMatchingOptions'
+          timeout:
+            $ref: '#/components/schemas/ActionTimeout'
+        example:
+        - urlPattern: https://example.org/store/api
+        - urlPattern: api/store
+          urlMatchingOptions: contains
+        - urlPattern: https://example.org/
+          urlMatchingOptions: startsWith
+        required:
+        - urlPattern
+        - action
+      - $ref: '#/components/schemas/Action'
+    keyPress:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - keyPress
+            description: Press a key on the keyboard.
+          key:
+            type: string
+            maxLength: 14
+            description: 'Key to press.
+
+
+              A single character or special key from the [list of supported
+
+              keys](/zyte-api/ide/api/index.md).
+
+
+              Key names are case-sensitive.
+
+
+              Only one key can be executed at a time. Key combinations are
+
+              not supported.
+
+              '
+        required:
+        - key
+        - action
+      - $ref: '#/components/schemas/Action'
+    Action:
+      description: Action to perform.
+      type: object
+      properties:
+        onError:
+          $ref: '#/components/schemas/onError'
+      example:
+        action: click
+        selector:
+          type: css
+          value: '#main'
+    OrganicResult:
+      type: object
+      properties:
+        description:
+          type: string
+          description: Result excerpt.
+          example: 'Squid is a caching proxy for the Web supporting HTTP, HTTPS, FTP, and more. It reduces bandwidth and improves response times by caching and reusing frequently- ...
+
+            '
+        name:
+          type: string
+          description: Result title.
+          example: squid-cache.org
+        url:
+          $ref: '#/components/schemas/OrganicResultURL'
+        rank:
+          type: integer
+          example: 1
+          description: 'Result position among organic results in the search page.
+
+
+            The first result of a search page is always 1, regardless of the
+
+            value of
+
+            serp.pageNumber.
+
+            '
+        displayedUrlText:
+          type: string
+          example: 1.4M+ followers
+          description: Extra information present in serp result
+    Response200:
+      required:
+      - url
+      properties:
+        url:
+          type: string
+          description: 'URL the data was extracted from.
+
+
+            Could be different from the input URL in case of
+
+            [redirection](/zyte-api/usage/http.md).
+
+
+            See also:
+
+            statusCode.
+
+            '
+          example: https://example.com/item-page/
+        statusCode:
+          type: integer
+          description: 'The HTTP status code retrieved from the target page.
+
+
+            If
+
+            [redirection is followed](/zyte-api/usage/http.md),
+
+            this is the status code of the response *after* redirection.
+
+
+            See also:
+
+            url.
+
+            '
+          example: 200
+        httpResponseBody:
+          description: '[Base64-encoded](https://en.wikipedia.org/wiki/Base64)
+
+            HTTP response body.
+
+
+            To get this response field, set the
+
+            httpResponseBody
+
+            request field to `true`.
+
+
+            Unlike
+
+            browserHtml,
+
+            this field supports binary response bodies, such as image files or
+
+            PDF files. This is the reason why this field is Base64-encoded,
+
+            JSON does not support binary data.
+
+
+            [See an example](/zyte-api/usage/http.md).
+
+            '
+          type: string
+          format: byte
+        httpResponseHeaders:
+          description: 'HTTP response headers.
+
+
+            To get this response field, set the
+
+            httpResponseHeaders
+
+            request field to `true`.
+
+
+            The `Content-Encoding` header value (e.g. `gzip`, `br`, etc.)
+
+            should not be used to decompress
+
+            httpResponseBody,
+
+            Zyte API already decompresses the body of compressed responses.
+
+
+            The `Set-Cookie` header value, when present, contains the header
+
+            value received from the main HTTP response. These cookies could
+
+            have changed later on, e.g. during browser rendering. Usually you
+
+            will want to ignore this header in favor of
+
+            responseCookies,
+
+            which provides the *final* cookies.
+
+
+            [See an example](/zyte-api/usage/features.md).
+
+            '
+          type: array
+          items:
+            $ref: '#/components/schemas/HTTPHeader'
+        browserHtml:
+          description: '[Browser HTML](/zyte-api/usage/browser.md).
+
+
+            To get this response field, set the
+
+            browserHtml
+
+            request field to `true`.
+
+
+            Browser HTML does not include the contents of
+
+            [iframes](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe)
+
+            or the
+
+            [shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM).
+
+
+            [See an example](/zyte-api/usage/browser.md).
+
+            '
+          type: string
+          example: <html>Downloaded data.</html>
+        session:
+          $ref: '#/components/schemas/Session'
+        screenshot:
+          description: '[Base64-encoded](https://en.wikipedia.org/wiki/Base64)
+
+            page screenshot file data.
+
+
+            To get this response field, set the
+
+            screenshot
+
+            request field to `true`.
+
+
+            screenshotOptions.format
+
+            determines the file format of the screenshot data.
+
+
+            [See an example](/zyte-api/usage/browser.md).
+
+            '
+          type: string
+          format: byte
+        article:
+          allOf:
+          - $ref: '#/components/schemas/Article'
+          - description: 'Article data.
+
+
+              To get this response field, set the
+
+              article
+
+              request field to `true`.
+
+              '
+        articleList:
+          allOf:
+          - $ref: '#/components/schemas/ArticleList'
+          - description: 'Article list data.
+
+
+              To get this response field, set the
+
+              articleList
+
+              request field to `true`.
+
+              '
+        articleNavigation:
+          allOf:
+          - $ref: '#/components/schemas/ArticleNavigation'
+          - description: 'Article navigation data.
+
+
+              To get this response field, set the
+
+              articleNavigation
+
+              request field to `true`.
+
+              '
+        forumThread:
+          allOf:
+          - $ref: '#/components/schemas/ForumThread'
+          - description: 'Forum thread data.
+
+
+              To get this response field, set the
+
+              forumThread
+
+              request field to `true`.
+
+              '
+        jobPosting:
+          allOf:
+          - $ref: '#/components/schemas/JobPosting'
+          - description: 'Job posting data.
+
+
+              To get this response field, set the
+
+              jobPosting
+
+              request field to `true`.
+
+              '
+        jobPostingNavigation:
+          allOf:
+          - $ref: '#/components/schemas/JobPostingNavigation'
+          - description: 'Job posting navigation data.
+
+
+              To get this response field, set the
+
+              jobPostingNavigation
+
+              request field to `true`.
+
+              '
+        pageContent:
+          allOf:
+          - $ref: '#/components/schemas/PageContent'
+          - description: 'Page content data.
+
+
+              To get this response field, set the
+
+              pageContent
+
+              request field to `true`.
+
+              '
+        product:
+          allOf:
+          - $ref: '#/components/schemas/Product'
+          - description: 'Product data.
+
+
+              To get this response field, set the
+
+              product
+
+              request field to `true`.
+
+              '
+        productList:
+          allOf:
+          - $ref: '#/components/schemas/ProductList'
+          - description: 'Product list data.
+
+
+              To get this response field, set the
+
+              productList
+
+              request field to `true`.
+
+              '
+        productNavigation:
+          allOf:
+          - $ref: '#/components/schemas/ProductNavigation'
+          - description: 'Product navigation data.
+
+
+              To get this response field, set the
+
+              productNavigation
+
+              request field to `true`.
+
+              '
+        customAttributes:
+          type: object
+          properties:
+            values:
+              type: object
+              additionalProperties: true
+              description: 'Values of extracted custom attributes, extracted according to the requested
+
+                customAttributes
+
+                schema.
+
+                '
+            metadata:
+              type: object
+              properties:
+                inputTokens:
+                  type: integer
+                  description: 'Total number of used input tokens, excluding our internal fixed prompt with the LLM instruction,
+
+                    when using the "generate" method.
+
+                    '
+                outputTokens:
+                  type: integer
+                  description: 'Total number of used output tokens, when using the "generate" method.
+
+                    '
+                textInputTokens:
+                  type: integer
+                  description: 'Total number of input tokens used for the text of the web page, excluding
+
+                    the schema and our internal fixed prompt with the LLM instruction,
+
+                    when using the "generate" method.
+
+                    Already included in the customAttributes.metadata.inputTokens
+
+                    field.
+
+                    '
+                textInputTokensBeforeTruncation:
+                  type: integer
+                  description: 'textInputTokens before the text was truncated to fit into the input limits,
+
+                    either set via
+
+                    customAttributesOptions.maxInputTokens
+
+                    or due to the model limitation returned in
+
+                    customAttributes.metadata.maxInputTokens,
+
+                    when using the "generate" method.
+
+                    '
+                maxInputTokens:
+                  type: integer
+                  description: 'Maximum number of allowed input tokens for the model, when using the "generate" method.
+
+                    '
+                excludedPIIAttributes:
+                  type: array
+                  items:
+                    type: string
+                  description: 'A list of all attributes dropped from the output due to a risk of PII
+
+                    (Personally Identifiable Information) extraction.
+
+                    '
+                error:
+                  type: string
+                  description: "* The ``extraction/unparsable-response`` error is given when the LLM response could not be parsed or recovered.\n  If this error happens, we suggest simplifying the task or reducing the number of attributes.\n* The ``extraction/schema-size-exceeded`` error is given when the schema did not fit into the input limits,\n  leaving no space for the input text, and therefore the LLM could not be used. If this error happens, we suggest\n  either making the schema smaller (fewer attributes and/or shorter descriptions),\n  or increasing\n  customAttributesOptions.maxInputTokens.\n"
+        echoData:
+          description: 'Arbitrary data set on the
+
+            echoData
+
+            request field.
+
+
+            [See an example](/zyte-api/usage/features.md).
+
+            '
+          type: object
+        jobId:
+          description: '[Scrapy Cloud](/scrapy-cloud/get-started.md)
+
+            job ID set on the
+
+            jobId
+
+            request field.
+
+
+            [See an example](/zyte-api/usage/features.md).
+
+            '
+          type: string
+          maxLength: 100
+          example: example-job-1
+        actions:
+          description: 'Debug information about the execution of the action sequence set in
+
+            the
+
+            actions
+
+            request field.
+
+
+            Action order in the response always matches that of the request.
+
+            '
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionResult'
+        responseCookies:
+          description: 'List of cookies set during the request.
+
+
+            To get this response field, set the
+
+            responseCookies
+
+            request field to `true`.
+
+
+            [See an example](/zyte-api/usage/features.md).
+
+            See also:
+
+            requestCookies.
+
+            '
+          type: array
+          items:
+            $ref: '#/components/schemas/Cookie'
+        networkCapture:
+          type: array
+          description: 'Responses captured by filters specified in the
+
+            networkCapture
+
+            request parameter.
+
+            '
+          items:
+            $ref: '#/components/schemas/CapturedResponse'
+        serp:
+          $ref: '#/components/schemas/Serp'
+    Size:
+      description: 'A standardized size of a product,
+
+        specified through a simple textual string (for example "XL", "32Wx34L").
+
+        A single product dimension (height, width) is not considered as the size.
+
+        '
+      type: string
+      example: XL
+    PageNumber:
+      description: Integer describing the current page number. Starts at 1.
+      type: integer
+      example: 2
+    waitForNavigation:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - waitForNavigation
+            description: 'Wait until the page navigates to a new URL or reloads.
+
+
+              If `waitForNavigation` is the first action, the specified options will
+
+              be applied to the initial navigation. Use it if the default timeout of
+
+              30 seconds or the default `waitUntil` value (`load`) is not sufficient
+
+              for the initial navigation.
+
+
+              Mind, however, that using `waitForNavigation` as the first action has
+
+              an important drawback: any error with the initial navigation will
+
+              nonetheless result in a successful API response, as any other [browser
+
+              action failure](/zyte-api/usage/errors.md).
+
+              '
+          timeout:
+            type: number
+            maximum: 45.0
+            minimum: 31.0
+            default: 31.0
+            description: 'Maximum wait time, in seconds.
+
+              '
+          waitUntil:
+            default: load
+            description: "When to consider that navigation succeeded:\n- `load` - [load event](https://developer.mozilla.org/en-US/docs/Web/API/Window/load_event), default.\n- `domcontentloaded` - [DOMContentLoaded event](https://developer.mozilla.org/en-US/docs/Web/API/Window/DOMContentLoaded_event).\n- `networkidle0` - no ongoing network connections for at least\n   0.5 seconds.\n"
+            type: string
+            enum:
+            - load
+            - domcontentloaded
+            - networkidle0
+        required:
+        - timeout
+        - action
+      - $ref: '#/components/schemas/Action'
+    ProductNavigation:
+      type: object
+      properties:
+        categoryName:
+          description: Name of the category in which the listed products are found.
+          type: string
+          example: Sports & Outdoors
+        nextPage:
+          $ref: '#/components/schemas/PaginationNext'
+        pageNumber:
+          $ref: '#/components/schemas/PageNumber'
+        items:
+          description: List of products available on this page.
+          type: array
+          items:
+            $ref: '#/components/schemas/NavigationRequest'
+        subCategories:
+          description: List of subcategory links found on this page.
+          type: array
+          items:
+            $ref: '#/components/schemas/NavigationRequest'
+        url:
+          description: URL of the page.
+          type: string
+        metadata:
+          $ref: '#/components/schemas/MetadataList'
+        required:
+        - url
+        - metadata
+    Mpn:
+      description: The Manufacturer Part Number (MPN) of the product. It is issued by the manufacturer, and is the same across different e-commerce websites.
+      type: string
+      example: code-123
+    SerpOptions:
+      type: object
+      description: Options for SERP extraction.
+      properties:
+        extractFrom:
+          type: string
+          enum:
+          - browserHtml
+          - httpResponseBody
+          description: 'Input to use for extraction, either
+
+            httpResponseBody
+
+            or
+
+            browserHtml.
+
+
+            If not specified, `httpResponseBody` is currently used by default.
+
+            In the future, the default value may depend on the target website.
+
+            '
+        keyword:
+          type: string
+          description: 'The keyword or search phrase to query in the SERP extraction process.
+
+            Example: `"best scraping framework"`
+
+            '
+    PageContent:
+      type: object
+      properties:
+        breadcrumbs:
+          description: 'A list of breadcrumbs (a specific navigation element).
+
+            '
+          example:
+          - name: Home
+            url: https://example.com/
+          - name: Category
+            url: https://example.com/category
+          - name: Subcategory
+          type: array
+          items:
+            $ref: '#/components/schemas/Breadcrumb'
+        headline:
+          description: A page headline.
+          type: string
+          example: Example page headline
+        title:
+          description: A page title extracted from the `<title>` tag of the page.
+          type: string
+          example: Example page title
+        itemMain:
+          description: 'Text of the primary content of the page.
+
+
+            It does not include navigation elements (headers, footers,
+
+            sidebars or pagination links).
+
+            '
+          type: string
+          example: Example content snippet showing part of the page’s main text…
+        itemMainXPath:
+          description: 'XPath for `itemMain`.
+
+
+            It is an XPath 1.0 expression that points to the smallest HTML
+
+            element that contains all of `itemMain`.
+
+
+            The expression may only work with an HTML5-compliant parser.
+
+            '
+          type: string
+          example: //*[@id='homepage-container']/*[1]
+        navigationHeader:
+          description: 'Navigation items from the header.
+
+
+            They are typically for site-wide navigation, not page-specific.
+
+            '
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                description: URL.
+                type: string
+                example: https://example.com/category/
+              name:
+                description: Name.
+                type: string
+                example: Category name
+            required:
+            - url
+        navigationFooter:
+          description: 'Navigation items from the footer.
+
+
+            They are typically for site-wide navigation, not page-specific.
+
+            '
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                description: URL.
+                type: string
+                example: https://example.com/policy/
+              name:
+                description: Name.
+                type: string
+                example: Privacy Policy
+            required:
+            - url
+        navigationSidebar:
+          description: 'Navigation items from the sidebars.
+
+
+            They are typically for site-wide navigation, not page-specific.
+
+            '
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                description: URL.
+                type: string
+                example: https://example.com/sidebar-link/
+              name:
+                description: Name.
+                type: string
+                example: Sidebar link
+            required:
+            - url
+        pagination:
+          description: 'Pagination items.
+
+
+            Items to navigate content pages, either relative to the current
+
+            page (e.g. current, next, previous) or absolute (e.g. first, last,
+
+            specific page number).
+
+            '
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                description: URL.
+                type: string
+                example: https://example.com/?page=2
+              name:
+                description: Name.
+                type: string
+                example: Next
+            required:
+            - url
+        nextPage:
+          $ref: '#/components/schemas/PaginationNext'
+        url:
+          description: URL of the page.
+          type: string
+          example: https://example.com/example-page/
+        canonicalUrl:
+          description: Canonical URL of the page, if available.
+          type: string
+          example: https://example.com/canonical-url-page/
+        metadata:
+          $ref: '#/components/schemas/Metadata__metadata'
+      required:
+      - url
+      - metadata
+    interaction:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - interaction
+            description: 'Execute a
+
+              [browser script](//zyte-api/ide/index.md).
+
+              '
+          id:
+            description: Script identifier
+            type: string
+          args:
+            description: Input arguments
+            type: object
+        required:
+        - id
+        - action
+      - $ref: '#/components/schemas/Action'
+    OrganicResultURL:
+      type: string
+      pattern: ^https?://[\S]+$
+      description: Result URL.
+      example: https://www.squid-cache.org/
+      additionalProperties: false
+    HTTPHeader:
+      type: object
+      description: A header name and value.
+      required:
+      - name
+      - value
+      properties:
+        name:
+          type: string
+          description: The name of the header
+          minLength: 1
+        value:
+          type: string
+          description: The value of the header
+      example:
+        name: Content-Type
+        value: text/html; charset=utf-8
+    Breadcrumb:
+      description: 'Breadcrumb item (a specific navigation element) with optional `name` and `url`.
+
+        '
+      example:
+        name: Home
+        url: https://example.com/
+      type: object
+      properties:
+        name:
+          description: Text of the breadcrumb, as it appears on the website.
+          type: string
+        url:
+          description: Absolute URL of the breadcrumb.
+          type: string
+    waitForResponse:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - waitForResponse
+            description: Wait until the response from a specific URL has been received.
+          urlPattern:
+            $ref: '#/components/schemas/UrlPattern'
+          urlMatchingOptions:
+            $ref: '#/components/schemas/PatternMatchingOptions'
+          timeout:
+            $ref: '#/components/schemas/ActionTimeout'
+        example:
+        - urlPattern: /store/api
+          urlMatchingOptions: contains
+        - urlPattern: https://example.org/store/
+          urlMatchingOptions: startsWith
+        required:
+        - urlPattern
+        - action
+      - $ref: '#/components/schemas/Action'
+    PaginationNext:
+      description: A link to the next page in the list.
+      type: object
+      properties:
+        url:
+          description: URL of the next page in the list.
+          type: string
+          example: http://example.com/foo?p=3
+        name:
+          description: Text of the link to the next page, if available.
+          type: string
+          example: '3'
+      required:
+      - url
+    scrollTo:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - scrollTo
+            description: 'Scroll the window to a particular place in the document.
+
+
+              To set the target location, use one (and only one) of the following:
+
+
+              - `top` and `left`, to set the target coordinates in pixels.
+
+
+              - `selector`, to target the center of an HTML element.
+
+              '
+          top:
+            description: Specifies the number of pixels along the Y axis to scroll the window.
+            type: integer
+          left:
+            description: Specifies the number of pixels along the X axis to scroll the window.
+            type: integer
+            default: 0
+          selector:
+            allOf:
+            - $ref: '#/components/schemas/ActionSelector'
+            - description: If passed scrolls to specified selector instead of scrolling to specified coordinates within page. If selector is not found no scroll is performed. If more than one elements match selector it scrolls to the first one.
+        required:
+        - action
+      - $ref: '#/components/schemas/Action'
+    hover:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - hover
+            description: 'Hover over a visible element.
+
+
+              Elements that are either hidden or not present will cause the action to
+
+              exit with an error.
+
+              '
+          selector:
+            $ref: '#/components/schemas/ActionSelector'
+        required:
+        - selector
+        - action
+      - $ref: '#/components/schemas/Action'
+    Price:
+      description: 'The price at which the product is being offered. If there is only one price associated with the offer, it is returned in this field.
+
+        '
+      type: string
+      pattern: ^[0-9]+(\.[0-9]+)?$
+      example: '149'
+    Author:
+      description: Author of the article.
+      type: object
+      properties:
+        name:
+          description: Full name of the author, e.g. "Alice".
+          type: string
+        nameRaw:
+          description: Text from which this author name was extracted, e.g. "Alice and Bob".
+          type: string
+      example:
+        name: Alice
+        nameRaw: Alice and Bob
+      required:
+      - name
+    NetworkCaptureFilterSequence:
+      type: array
+      maxItems: 10
+      description: 'Filters to capture browser network responses.
+
+
+        HTTP responses received during browser rendering (including
+
+        action
+
+        execution) will be returned in the
+
+        networkCapture
+
+        response field if they match any of the filters defined here.
+
+
+        You can capture up to 10 responses, provided the sum of their bodies
+
+        does not exceed 5 MiB. If they do exceed that limit, only the first
+
+        captured responses within the limit are returned.
+
+
+        [See an example](/zyte-api/usage/browser.md).
+
+        '
+      items:
+        $ref: '#/components/schemas/NetworkCaptureFilter'
+    click:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - click
+            description: Click on an element.
+          selector:
+            $ref: '#/components/schemas/ActionSelector'
+          button:
+            description: Mouse button to click
+            type: string
+            enum:
+            - left
+            - right
+            - middle
+            default: left
+          delay:
+            description: Time to wait between mousedown and mouseup, in seconds.
+            type: number
+            minimum: 0
+            maximum: 3
+            default: 0
+          waitForNavigationTimeout:
+            description: 'Maximum waiting time in seconds for the navigation event during the click action.
+
+
+              If navigation happens within the defined duration, then
+
+              waiting is halted and the next action is executed after the new
+
+              is page is loaded. If the page loading does not finish then the next action
+
+              ends with an error, and following actions may not be executed, depending
+
+              on the onError property. If no navigation happens within the defined
+
+              duration then the next action is executed.
+
+              '
+            type: number
+            minimum: 0
+            maximum: 20
+            default: 0
+        required:
+        - selector
+        - action
+      - $ref: '#/components/schemas/Action'
+    InteractionLogEntry:
+      description: Interaction log entry
+      type: object
+      properties:
+        time:
+          description: The ISO 8601 format of the time
+          type: string
+        level:
+          description: The log level
+          type: string
+          enum:
+          - debug
+          - info
+          - warning
+          - error
+          - warn
+        message:
+          description: The log message
+          type: string
+    RegularPrice:
+      description: 'The price before any discount or special offer.
+
+        '
+      type: string
+      pattern: ^[0-9]+(\.[0-9]+)?$
+      example: '199.00'
+    hide:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - hide
+            description: Hide an element.
+          selector:
+            $ref: '#/components/schemas/ActionSelector'
+        required:
+        - action
+        - selector
+      - $ref: '#/components/schemas/Action'
+    Sku:
+      description: 'The Stock Keeping Unit (SKU), i.e. a merchant-specific identifier
+
+        for the product - identifier assigned by the seller.
+
+
+        ![](https://docs.zyte.com/_static/images/schemas/sku.png)
+
+        '
+      example: A123DK9823
+      type: string
+    doubleClick:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - doubleClick
+            description: Double click on an element.
+          selector:
+            $ref: '#/components/schemas/ActionSelector'
+        required:
+        - selector
+        - action
+      - $ref: '#/components/schemas/Action'
+    AdditionalProperty:
+      description: 'Additional propertiy or characteristics.
+
+
+        * name field contains the property name,
+
+        * value field contains the property value.
+
+
+        ![](https://docs.zyte.com/_static/images/schemas/product_info.png)
+
+        '
+      example:
+        name: batteries
+        value: 1 Lithium ion batteries required. (included)
+      type: object
+      properties:
+        name:
+          description: Property name.
+          type: string
+        value:
+          description: Property value.
+          type: string
+      required:
+      - name
+    Problem:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          description: 'A URI reference that uniquely identifies the problem type, only in
+
+            the context of the provided API.
+
+
+            Opposed to the specification in RFC-7807, it is neither recommended
+
+            to be dereferenceable and point to human-readable documentation nor
+
+            globally unique for the problem type.
+
+            '
+          default: about:blank
+          example: /problem/connection-error
+        title:
+          type: string
+          description: 'A short summary of the problem type. Written in English and readable for engineers, usually not suited for non-technical stakeholders, and not localized.
+
+            '
+          example: Service Unavailable
+        status:
+          type: integer
+          format: int32
+          description: 'The HTTP status code generated by Zyte API for this occurrence of the problem.
+
+            '
+          minimum: 100
+          example: 503
+          exclusiveMaximum: 600
+        detail:
+          type: string
+          description: 'A human-readable explanation specific to this occurrence of the problem that is helpful to locate the source of the problem and gives advice on how to proceed.
+
+            Written in English and readable for engineers, usually not suited for non-technical stakeholders, and not localized.
+
+            '
+          example: Connection to database timed out
+    Style:
+      description: 'Style of the product.
+
+        It can also be referred as pattern/finish on the product page.
+
+        Example values: "Polka dots", "Striped",
+
+        "Nickel finish with Translucent glass", etc.
+
+        '
+      type: string
+      example: Striped
+    MetadataList:
+      description: Top-level metadata for list data types.
+      properties:
+        dateDownloaded:
+          $ref: '#/components/schemas/DateDownloaded'
+      required:
+      - dateDownloaded
+    Weight:
+      type: object
+      properties:
+        value:
+          description: 'A weight value expressed as a floating point number.
+
+            '
+          type: number
+          example: 120.0
+        unit:
+          description: 'A normalized unit of weight, like kilogram / ounce / pound and others.
+
+            '
+          type: string
+          example: kilogram
+        rawUnit:
+          description: 'A unit of weight without normalization - how it was extracted from the page.
+
+            Normalized version of the rawUnit is in ''unit'' attribute.
+
+            '
+          type: string
+          example: kg
     Product:
       type: object
       required:
@@ -5359,151 +5351,159 @@ components:
                 $ref: '#/components/schemas/Url'
               canonicalUrl:
                 $ref: '#/components/schemas/CanonicalUrl'
-    Metadata:
-      type: object
-      description: Metadata.
+    ActionSelector:
+      description: 'A CSS or XPath selector to search for an element.
+
+        '
       properties:
-        displayedQuery:
+        type:
+          description: The type of selector - CSS or XPath
           type: string
-          description: Search query as seen in the webpage.
-          example: squid proxy
-        searchedQuery:
+          enum:
+          - css
+          - xpath
+        value:
           type: string
-          description: Search query as specified in the input URL.
-          example: squid proxy
-        totalOrganicResults:
-          type: integer
-          format: int64
-          description: 'Total number of organic results reported by the search engine.
+          minLength: 1
+          maxLength: 500
+        state:
+          description: 'State can be either of the following values and defaults to visible
+
+            * ''visible'' - The element has a non-empty bounding box and no visibility:hidden. Note that an element without content or with display:none has an empty bounding box, and is not considered visible.
+
+            * ''hidden'' - The element is either detached from the DOM, or has an empty bounding box or visibility:hidden.
+
+            This is the opposite of the ''visible'' option.
+
+            * ''attached'' - The element is present in the DOM; it can be visible or hidden
 
             '
-          minimum: 0
-          example: 10000
-        dateDownloaded:
           type: string
-          description: 'The timestamp at which the data was downloaded. Timezone: UTC.
-
-            Format: ISO 8601 format: "YYYY-MM-DDThh:mm:ssZ"
-
-            '
-          example: '2024-02-29T13:01:54Z'
-    MetadataList:
-      description: Top-level metadata for list data types.
-      properties:
-        dateDownloaded:
-          $ref: '#/components/schemas/DateDownloaded'
+          enum:
+          - attached
+          - visible
+          - hidden
+          default: visible
       required:
-      - dateDownloaded
-    Sku:
-      description: 'The Stock Keeping Unit (SKU), i.e. a merchant-specific identifier
+      - type
+      - value
+    waitForSelector:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - waitForSelector
+            description: 'Wait for the selector to appear.
 
-        for the product - identifier assigned by the seller.
+
+              If at the moment of calling the method the selector already
+
+              exists, the action will return immediately.
 
 
-        ![](https://docs.zyte.com/_static/images/schemas/sku.png)
+              Also, the action will return immediately after the first matching
+
+              selector appears.
+
+
+              For a usage example, see the
+
+              [web scraping tutorial](/web-scraping/tutorial/js.md).
+
+              '
+          selector:
+            $ref: '#/components/schemas/ActionSelector'
+          timeout:
+            $ref: '#/components/schemas/ActionTimeout'
+        required:
+        - selector
+        - action
+      - $ref: '#/components/schemas/Action'
+    NetworkCaptureFilter:
+      type: object
+      description: 'Filter defined in the
+
+        networkCapture
+
+        request field that matched the captured response.
 
         '
-      example: A123DK9823
-      type: string
-    ForbiddenDomainProblem:
-      allOf:
-      - $ref: '#/components/schemas/Problem'
       properties:
-        blockedDomain:
+        filterType:
           type: string
-          description: 'The domain which extraction cannot be performed.
+          enum:
+          - url
+          - resourceType
+        httpResponseBody:
+          type: boolean
+          default: false
+          description: 'Set to `true` to get the body of the captured response in the
+
+            [networkCapture[].httpResponseBody](https://docs.zyte.com/zyte-api/usage/reference.html#operation/extract/response/200/networkCapture.httpResponseBody)
+
+            response field.
 
             '
-          example: forbiddendomain.com
-    waitForNavigation:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - waitForNavigation
-            description: 'Wait until the page navigates to a new URL or reloads.
-
-
-              If `waitForNavigation` is the first action, the specified options will
-
-              be applied to the initial navigation. Use it if the default timeout of
-
-              30 seconds or the default `waitUntil` value (`load`) is not sufficient
-
-              for the initial navigation.
-
-
-              Mind, however, that using `waitForNavigation` as the first action has
-
-              an important drawback: any error with the initial navigation will
-
-              nonetheless result in a successful API response, as any other [browser
-
-              action failure](/zyte-api/usage/errors.md).
-
-              '
-          timeout:
-            type: number
-            maximum: 45.0
-            minimum: 31.0
-            default: 31.0
-            description: 'Maximum wait time, in seconds.
-
-              '
-          waitUntil:
-            default: load
-            description: "When to consider that navigation succeeded:\n- `load` - [load event](https://developer.mozilla.org/en-US/docs/Web/API/Window/load_event), default.\n- `domcontentloaded` - [DOMContentLoaded event](https://developer.mozilla.org/en-US/docs/Web/API/Window/DOMContentLoaded_event).\n- `networkidle0` - no ongoing network connections for at least\n   0.5 seconds.\n"
-            type: string
-            enum:
-            - load
-            - domcontentloaded
-            - networkidle0
-        required:
-        - timeout
-        - action
-      - $ref: '#/components/schemas/Action'
-    DateDownloaded:
-      description: 'The timestamp at which the data was downloaded.
-
-        Timezone: UTC. Format: ISO 8601 format: "YYYY-MM-DDThh:mm:ssZ"
-
-        '
-      type: string
-      example: '2019-06-19T08:27:43Z'
-    keyPress:
-      allOf:
-      - properties:
-          action:
-            enum:
-            - keyPress
-            description: Press a key on the keyboard.
-          key:
-            type: string
-            maxLength: 14
-            description: 'Key to press.
-
-
-              A single character or special key from the [list of supported
-
-              keys](/zyte-api/ide/api/index.md).
-
-
-              Key names are case-sensitive.
-
-
-              Only one key can be executed at a time. Key combinations are
-
-              not supported.
-
-              '
-        required:
-        - key
-        - action
-      - $ref: '#/components/schemas/Action'
-    CanonicalUrl:
-      description: Canonical URL of the product, if available.
+      required:
+      - filterType
+      discriminator:
+        propertyName: filterType
+        mapping:
+          url: '#/components/schemas/UrlFilter'
+          resourceType: '#/components/schemas/ResourceTypeFilter'
+    CustomAttribute:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 300
+        type:
+          type: string
+          enum:
+          - boolean
+          - string
+          - number
+          - integer
+          - array
+          - object
+      discriminator:
+        propertyName: type
+        mapping:
+          boolean: '#/components/schemas/CustomAttributeBoolean'
+          string: '#/components/schemas/CustomAttributeString'
+          number: '#/components/schemas/CustomAttributeNumber'
+          integer: '#/components/schemas/CustomAttributeInteger'
+          array: '#/components/schemas/CustomAttributeArray'
+          object: '#/components/schemas/CustomAttributeObject'
+    Url:
+      description: URL of a page where this product was extracted.
       type: string
       example: https://example.com/product/
+    evaluate:
+      allOf:
+      - properties:
+          action:
+            enum:
+            - evaluate
+            description: "Run JavaScript code in the page context.\n\nThis is a very powerful action. Use cases include:\n\n-   Sending an API request from the page context, and writing\n    the response somewhere in the DOM, so that the\n    [browser HTML](/zyte-api/usage/browser.md)\n    output includes it.\n"
+          source:
+            description: JavaScript code to run.
+            type: string
+            maxLength: 6000
+        required:
+        - source
+        - action
+      - $ref: '#/components/schemas/Action'
+    Image:
+      description: Image.
+      type: object
+      properties:
+        url:
+          description: URL of an image.
+          type: string
+          example: http://example.com/item-1/image1.jpeg
+      required:
+      - url
   securitySchemes:
     BasicAuth:
       type: http
