@@ -361,6 +361,21 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
+    ValidationError:
+      properties:
+        detail:
+          properties:
+            <location>:
+              properties:
+                <field_name>:
+                  items:
+                    type: string
+                  type: array
+              type: object
+          type: object
+        message:
+          type: string
+      type: object
     StatsResponseV1:
       properties:
         page:
@@ -376,6 +391,28 @@ components:
           type: array
         total_result_count:
           minimum: 0
+          type: integer
+      required:
+      - page
+      - page_size
+      - results
+      - total_result_count
+      type: object
+    StatsResponse:
+      properties:
+        page:
+          minimum: 1
+          type: integer
+        page_size:
+          maximum: 500
+          minimum: 1
+          type: integer
+        results:
+          items:
+            $ref: '#/components/schemas/StatsResult'
+          type: array
+        total_result_count:
+          minimum: 1
           type: integer
       required:
       - page
@@ -495,40 +532,6 @@ components:
       - request_count
       - response_time_sec_avg
       - response_time_sec_p80
-      type: object
-    CurrencyValue:
-      description: 'A monetary amount in a single currency.
-
-
-        Used by the multicurrency (`/api/v1/stats`) cost fields, where each cost is reported as a list with one `CurrencyValue` entry per currency present in your usage.'
-      properties:
-        currency:
-          description: Three-letter [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) currency code (e.g. `USD`, `EUR`, `GBP`).
-          maxLength: 3
-          minLength: 3
-          type: string
-        value:
-          description: The amount, in micro-units of `currency` (divide by 1,000,000 to get the amount in the currency's main unit).
-          minimum: 0
-          type: number
-      required:
-      - currency
-      - value
-      type: object
-    ValidationError:
-      properties:
-        detail:
-          properties:
-            <location>:
-              properties:
-                <field_name>:
-                  items:
-                    type: string
-                  type: array
-              type: object
-          type: object
-        message:
-          type: string
       type: object
     StatsResultV1:
       properties:
@@ -661,34 +664,31 @@ components:
       - response_time_sec_avg
       - response_time_sec_p80
       type: object
+    CurrencyValue:
+      description: 'A monetary amount in a single currency.
+
+
+        Used by the multicurrency (`/api/v1/stats`) cost fields, where each cost is reported as a list with one `CurrencyValue` entry per currency present in your usage.'
+      properties:
+        currency:
+          description: Three-letter [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) currency code (e.g. `USD`, `EUR`, `GBP`).
+          maxLength: 3
+          minLength: 3
+          type: string
+        value:
+          description: The amount, in micro-units of `currency` (divide by 1,000,000 to get the amount in the currency's main unit).
+          minimum: 0
+          type: number
+      required:
+      - currency
+      - value
+      type: object
     HTTPError:
       properties:
         detail:
           type: object
         message:
           type: string
-      type: object
-    StatsResponse:
-      properties:
-        page:
-          minimum: 1
-          type: integer
-        page_size:
-          maximum: 500
-          minimum: 1
-          type: integer
-        results:
-          items:
-            $ref: '#/components/schemas/StatsResult'
-          type: array
-        total_result_count:
-          minimum: 1
-          type: integer
-      required:
-      - page
-      - page_size
-      - results
-      - total_result_count
       type: object
   securitySchemes:
     BasicAuth:
